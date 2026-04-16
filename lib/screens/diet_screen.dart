@@ -1,6 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../services/supabase_service.dart';
 import '../widgets/custom_drawer.dart';
 
 class DietScreen extends StatefulWidget {
@@ -11,6 +10,8 @@ class DietScreen extends StatefulWidget {
 }
 
 class _DietScreenState extends State<DietScreen> {
+  final _supabaseService = SupabaseService();
+
   List<String> _breakfast = [];
   List<String> _lunch = [];
   List<String> _supper = [];
@@ -20,50 +21,29 @@ class _DietScreenState extends State<DietScreen> {
   @override
   void initState() {
     super.initState();
-    _loadDietData();
+    _loadLocalData();
   }
 
-  // --- MUDANÇA AQUI: Nova forma de salvar os dados ---
+  void _loadLocalData() {
+    final data = _supabaseService.dietData;
+    setState(() {
+      _breakfast = List<String>.from(data['breakfast'] ?? []);
+      _lunch = List<String>.from(data['lunch'] ?? []);
+      _supper = List<String>.from(data['supper'] ?? []);
+      _dinner = List<String>.from(data['dinner'] ?? []);
+      _substitutions = List<String>.from(data['substitutions'] ?? []);
+    });
+  }
+
   Future<void> _saveDietData() async {
-    Map<String, dynamic> data = {
+    Map<String, dynamic> dietData = {
       'breakfast': _breakfast,
       'lunch': _lunch,
       'supper': _supper,
       'dinner': _dinner,
       'substitutions': _substitutions,
     };
-
-    String jsonString = json.encode(data);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('diet_data', jsonString);
-  }
-
-  // --- MUDANÇA AQUI: Nova forma de carregar os dados ---
-  Future<void> _loadDietData() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final String? jsonString = prefs.getString('diet_data');
-
-      if (jsonString != null) {
-        Map<String, dynamic> data = json.decode(jsonString);
-
-        setState(() {
-          _breakfast = List<String>.from(data['breakfast'] ?? []);
-          _lunch = List<String>.from(data['lunch'] ?? []);
-          _supper = List<String>.from(data['supper'] ?? []);
-          _dinner = List<String>.from(data['dinner'] ?? []);
-          _substitutions = List<String>.from(data['substitutions'] ?? []);
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _breakfast = [];
-        _lunch = [];
-        _supper = [];
-        _dinner = [];
-        _substitutions = [];
-      });
-    }
+    await _supabaseService.saveDiet(dietData);
   }
 
   void _applySuggestedDiet() {
@@ -149,7 +129,7 @@ class _DietScreenState extends State<DietScreen> {
     );
   }
 
-  void _showItemDialog(String title, List<String> list, String listKey, {int? index}) {
+  void _showItemDialog(String title, List<String> list, {int? index}) {
     TextEditingController controller = TextEditingController(
       text: index != null ? list[index] : '',
     );
@@ -237,7 +217,7 @@ class _DietScreenState extends State<DietScreen> {
     );
   }
 
-  Widget _buildDietSection(String title, List<String> list, String listKey) {
+  Widget _buildDietSection(String title, List<String> list) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12.0),
       elevation: 2,
@@ -263,7 +243,7 @@ class _DietScreenState extends State<DietScreen> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.edit, color: Colors.blue),
-                      onPressed: () => _showItemDialog(title, list, listKey, index: index),
+                      onPressed: () => _showItemDialog(title, list, index: index),
                     ),
                     IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),
@@ -277,7 +257,7 @@ class _DietScreenState extends State<DietScreen> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: ElevatedButton.icon(
-              onPressed: () => _showItemDialog(title, list, listKey),
+              onPressed: () => _showItemDialog(title, list),
               icon: const Icon(Icons.add),
               label: const Text("Adicionar Item"),
               style: ElevatedButton.styleFrom(
@@ -299,17 +279,17 @@ class _DietScreenState extends State<DietScreen> {
         centerTitle: true,
         backgroundColor: Colors.green,
       ),
-      drawer: CustomDrawer(),
+      drawer: const CustomDrawer(),
       backgroundColor: Colors.grey[100],
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
-            _buildDietSection("Café da Manhã (08:00)", _breakfast, 'breakfast'),
-            _buildDietSection("Almoço (12:00)", _lunch, 'lunch'),
-            _buildDietSection("Lanche (16:30)", _supper, 'supper'),
-            _buildDietSection("Jantar (20:00)", _dinner, 'dinner'),
-            _buildDietSection("Grupos de Substituição", _substitutions, 'substitutions'),
+            _buildDietSection("Café da Manhã (08:00)", _breakfast),
+            _buildDietSection("Almoço (12:00)", _lunch),
+            _buildDietSection("Lanche (16:30)", _supper),
+            _buildDietSection("Jantar (20:00)", _dinner),
+            _buildDietSection("Grupos de Substituição", _substitutions),
             const SizedBox(height: 10),
             ElevatedButton.icon(
               onPressed: _applySuggestedDiet,

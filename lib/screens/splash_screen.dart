@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/supabase_service.dart';
 import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -27,13 +28,30 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.forward();
 
-    _controller.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const Home()),
-        );
-      }
-    });
+    // Inicia o carregamento dos dados do Supabase enquanto a animação roda
+    _initAppData();
+  }
+
+  Future<void> _initAppData() async {
+    // Carrega todos os dados do banco para o cache do serviço
+    await SupabaseService().loadAllData();
+
+    if (_controller.isCompleted) {
+      _navigateToHome();
+    } else {
+      _controller.addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          _navigateToHome();
+        }
+      });
+    }
+  }
+
+  void _navigateToHome() {
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => const Home()),
+    );
   }
 
   @override

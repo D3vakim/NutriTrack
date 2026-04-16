@@ -1,7 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../services/supabase_service.dart';
 import '../widgets/custom_drawer.dart';
 
 class TrainingScreen extends StatefulWidget {
@@ -12,6 +11,7 @@ class TrainingScreen extends StatefulWidget {
 }
 
 class _TrainingScreenState extends State<TrainingScreen> {
+  final _supabaseService = SupabaseService();
   List<dynamic> _trainings = [];
   String _selectedMonthYear = '';
 
@@ -20,7 +20,14 @@ class _TrainingScreenState extends State<TrainingScreen> {
     super.initState();
     DateTime now = DateTime.now();
     _selectedMonthYear = '${now.month.toString().padLeft(2, '0')}/${now.year}';
-    _loadTrainings();
+    _loadLocalTrainings();
+  }
+
+  void _loadLocalTrainings() {
+    setState(() {
+      _trainings = List.from(_supabaseService.trainingHistory);
+      _sortTrainings();
+    });
   }
 
   void _sortTrainings() {
@@ -33,29 +40,8 @@ class _TrainingScreenState extends State<TrainingScreen> {
     });
   }
 
-  // --- MUDANÇA AQUI: Nova forma de carregar os treinos ---
-  Future<void> _loadTrainings() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final String? jsonString = prefs.getString('training_history');
-
-      if (jsonString != null) {
-        setState(() {
-          _trainings = jsonDecode(jsonString);
-          _sortTrainings();
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _trainings = [];
-      });
-    }
-  }
-
-  // --- MUDANÇA AQUI: Nova forma de salvar os treinos ---
   Future<void> _saveTrainings() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('training_history', jsonEncode(_trainings));
+    await _supabaseService.saveTraining(_trainings);
   }
 
   String _formatDate(DateTime date) {
@@ -129,7 +115,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text("Confirmar Exclusão"),
-          content: const Text("Tem certeza que deseja deletar este registro de treino?"),
+          content: const Text("Tem certeza que deseja deletar este registro de treino da nuvem?"),
           actions: [
             OutlinedButton(
               onPressed: () => Navigator.pop(context),
@@ -314,7 +300,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
         centerTitle: true,
         backgroundColor: Colors.green,
       ),
-      drawer: CustomDrawer(),
+      drawer: const CustomDrawer(),
       backgroundColor: Colors.grey[100],
       body: Column(
         children: [

@@ -1,6 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../services/supabase_service.dart';
 import '../utils/calculadora_logic.dart';
 import '../widgets/custom_drawer.dart';
 
@@ -12,11 +11,11 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  final _supabaseService = SupabaseService();
   TextEditingController weightController = TextEditingController();
   TextEditingController heightController = TextEditingController();
 
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
   String _infoText = "Informe seus dados!";
 
   void _resetFields() {
@@ -28,24 +27,14 @@ class _HomeState extends State<Home> {
     });
   }
 
-  // --- MUDANÇA AQUI: Nova forma de salvar no histórico compartilhando a mesma chave ---
   Future<void> _saveToHistory(double weight, double height, double imc) async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? jsonString = prefs.getString('imc_history');
-    List<dynamic> history = [];
-
-    if (jsonString != null) {
-      try {
-        history = jsonDecode(jsonString);
-      } catch (e) {
-        history = [];
-      }
-    }
+    // Usamos o histórico que já foi carregado no serviço
+    List<dynamic> history = List.from(_supabaseService.imcHistory);
 
     final now = DateTime.now();
     final String formattedDate = "${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}";
 
-    int existingIndex = history.indexWhere((h) => h['date'].toString().substring(0, 10) == formattedDate);
+    int existingIndex = history.indexWhere((h) => h['date'].toString() == formattedDate);
 
     if (existingIndex != -1) {
       if (!mounted) return;
@@ -72,13 +61,11 @@ class _HomeState extends State<Home> {
                     'height': height,
                     'imc': imc,
                   };
-
-                  await prefs.setString('imc_history', jsonEncode(history));
-
+                  await _supabaseService.saveIMC(history);
                   if (mounted) {
                     Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Medida atualizada com sucesso!'), backgroundColor: Colors.green),
+                      const SnackBar(content: Text('Medida atualizada no Supabase!'), backgroundColor: Colors.green),
                     );
                   }
                 },
@@ -96,12 +83,10 @@ class _HomeState extends State<Home> {
         'height': height,
         'imc': imc,
       });
-
-      await prefs.setString('imc_history', jsonEncode(history));
-
+      await _supabaseService.saveIMC(history);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Salvo no seu histórico de acompanhamento!'), backgroundColor: Colors.green),
+          const SnackBar(content: Text('Salvo no seu histórico online!'), backgroundColor: Colors.green),
         );
       }
     }
@@ -148,8 +133,10 @@ class _HomeState extends State<Home> {
   }
 
   void _validateAndCalculate() {
-    double weight = double.parse(weightController.text);
-    double height = double.parse(heightController.text);
+    double weight = double.tryParse(weightController.text) ?? 0;
+    double height = double.tryParse(heightController.text) ?? 0;
+
+    if (weight == 0 || height == 0) return;
 
     bool heightWarning = height > 251 || height < 54;
     bool weightWarning = weight > 650;
@@ -192,7 +179,7 @@ class _HomeState extends State<Home> {
           )
         ],
       ),
-      drawer: CustomDrawer(),
+      drawer: const CustomDrawer(),
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(10.0, 0.0, 10.0, 0.0),
