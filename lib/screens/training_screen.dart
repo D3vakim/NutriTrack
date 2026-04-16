@@ -51,83 +51,50 @@ class _TrainingScreenState extends State<TrainingScreen> {
   void _processTrainingEntry(String date, bool trained, int duration) {
     int existingIndex = _trainings.indexWhere((t) => t['date'] == date);
 
-    if (existingIndex != -1) {
-      showDialog(
-        context: context,
-        builder: (ctx) {
-          return AlertDialog(
-            title: const Text("Atenção"),
-            content: Text("Você já tem um registro para o dia $date. Deseja substituir pelo novo registro?"),
-            actions: [
-              OutlinedButton(
-                onPressed: () => Navigator.pop(ctx),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.green),
-                  foregroundColor: Colors.green,
-                ),
-                child: const Text("Cancelar"),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _trainings[existingIndex] = {
-                      'date': date,
-                      'trained': trained,
-                      'duration': duration,
-                      'timestamp': DateTime.now().millisecondsSinceEpoch,
-                    };
-                    _sortTrainings();
-                  });
-                  _saveTrainings();
-                  Navigator.pop(ctx);
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-                child: const Text("Substituir", style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          );
-        },
-      );
-    } else {
-      setState(() {
+    setState(() {
+      if (existingIndex != -1) {
+        _trainings[existingIndex] = {
+          'date': date,
+          'trained': trained,
+          'duration': duration,
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        };
+      } else {
         _trainings.add({
           'date': date,
           'trained': trained,
           'duration': duration,
           'timestamp': DateTime.now().millisecondsSinceEpoch,
         });
-        _sortTrainings();
-      });
-      _saveTrainings();
-    }
-  }
-
-  void _deleteTraining(int index) {
-    setState(() {
-      _trainings.removeAt(index);
+      }
+      _sortTrainings();
     });
     _saveTrainings();
   }
 
-  void _confirmDelete(int index) {
+  void _deleteTraining(int indexInFullList) {
+    setState(() {
+      _trainings.removeAt(indexInFullList);
+    });
+    _saveTrainings();
+  }
+
+  void _confirmDelete(int indexInFullList) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text("Confirmar Exclusão"),
-          content: const Text("Tem certeza que deseja deletar este registro de treino da nuvem?"),
+          content: const Text("Tem certeza que deseja deletar este registro de treino?"),
           actions: [
             OutlinedButton(
               onPressed: () => Navigator.pop(context),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.green),
-                foregroundColor: Colors.green,
-              ),
+              style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.green), foregroundColor: Colors.green),
               child: const Text("Cancelar"),
             ),
             ElevatedButton(
               onPressed: () {
-                _deleteTraining(index);
+                _deleteTraining(indexInFullList);
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -139,30 +106,24 @@ class _TrainingScreenState extends State<TrainingScreen> {
     );
   }
 
-  void _showDurationDialog(String dateStr) {
-    TextEditingController durationCtrl = TextEditingController();
+  void _showDurationDialog(String dateStr, {int? initialDuration}) {
+    TextEditingController durationCtrl = TextEditingController(text: initialDuration?.toString() ?? "");
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text("Treino do dia $dateStr"),
+          title: Text(initialDuration != null ? "Editar Treino ($dateStr)" : "Treino do dia $dateStr"),
           content: TextField(
             controller: durationCtrl,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(
-              labelText: "Duração (em minutos)",
-              hintText: "Ex: 60",
-            ),
+            decoration: const InputDecoration(labelText: "Duração (em minutos)", hintText: "Ex: 60"),
           ),
           actions: [
             OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.green),
-                foregroundColor: Colors.green,
-              ),
-              child: const Text("Cancelar"),
+              onPressed: () => Navigator.pop(context), 
+              style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.green), foregroundColor: Colors.green),
+              child: const Text("Cancelar")
             ),
             ElevatedButton(
               onPressed: () {
@@ -187,87 +148,56 @@ class _TrainingScreenState extends State<TrainingScreen> {
       initialDate: DateTime.now().subtract(const Duration(days: 1)),
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Colors.green,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
-
-    if (pickedDate == null) return;
-
-    String dateStr = _formatDate(pickedDate);
-
-    if (!mounted) return;
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
+    if (pickedDate != null) {
+      String dateStr = _formatDate(pickedDate);
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
           title: Text("Registro do dia $dateStr"),
           content: const Text("Você treinou neste dia?"),
           actions: [
             OutlinedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _processTrainingEntry(dateStr, false, 0);
-              },
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.blue),
-                foregroundColor: Colors.blue,
-              ),
-              child: const Text("Foi Descanso"),
+              onPressed: () { Navigator.pop(context); _processTrainingEntry(dateStr, false, 0); }, 
+              style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.blue), foregroundColor: Colors.blue),
+              child: const Text("Descanso")
             ),
             ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _showDurationDialog(dateStr);
-              },
+              onPressed: () { Navigator.pop(context); _showDurationDialog(dateStr); }, 
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
               child: const Text("Sim, Treinei", style: TextStyle(color: Colors.white)),
             ),
           ],
-        );
-      },
-    );
+        ),
+      );
+    }
   }
 
   List<String> _getAvailableMonths() {
-    int currentYear = DateTime.now().year;
-    List<String> months = [];
-    for (int y = currentYear - 1; y <= currentYear + 1; y++) {
-      for (int m = 1; m <= 12; m++) {
-        months.add('${m.toString().padLeft(2, '0')}/$y');
-      }
+    Set<String> months = {};
+    DateTime now = DateTime.now();
+    months.add('${now.month.toString().padLeft(2, '0')}/${now.year}');
+    for (var item in _trainings) {
+      List<String> parts = item['date'].split('/');
+      months.add('${parts[1]}/${parts[2]}');
     }
-    months.sort((a, b) {
+    List<String> sorted = months.toList();
+    sorted.sort((a, b) {
       int valA = int.parse(a.split('/')[1]) * 100 + int.parse(a.split('/')[0]);
       int valB = int.parse(b.split('/')[1]) * 100 + int.parse(b.split('/')[0]);
       return valB.compareTo(valA);
     });
-    return months;
+    return sorted;
   }
 
   List<FlSpot> _getChartSpots(int month, int year, int daysInMonth) {
     List<FlSpot> spots = [];
-
     for (int i = 1; i <= daysInMonth; i++) {
       String dateStr = "${i.toString().padLeft(2, '0')}/${month.toString().padLeft(2, '0')}/$year";
-
       var dayData = _trainings.where((e) => e['date'] == dateStr).toList();
-      double duration = 0;
-
-      if (dayData.isNotEmpty && dayData.first['trained'] == true) {
-        duration = (dayData.first['duration'] ?? 0).toDouble();
-      }
-
+      double duration = (dayData.isNotEmpty && dayData.first['trained'] == true) 
+          ? (dayData.first['duration'] ?? 0).toDouble() : 0;
       spots.add(FlSpot(i.toDouble(), duration));
     }
     return spots;
@@ -277,255 +207,144 @@ class _TrainingScreenState extends State<TrainingScreen> {
   Widget build(BuildContext context) {
     String todayStr = _formatDate(DateTime.now());
     List<String> availableMonths = _getAvailableMonths();
+    if (!availableMonths.contains(_selectedMonthYear)) _selectedMonthYear = availableMonths.first;
 
-    if (!availableMonths.contains(_selectedMonthYear)) {
-      _selectedMonthYear = availableMonths.first;
-    }
+    int currentM = int.parse(_selectedMonthYear.split('/')[0]);
+    int currentY = int.parse(_selectedMonthYear.split('/')[1]);
+    int daysInMonth = DateUtils.getDaysInMonth(currentY, currentM);
 
-    int currentFilterMonth = int.parse(_selectedMonthYear.split('/')[0]);
-    int currentFilterYear = int.parse(_selectedMonthYear.split('/')[1]);
-    int daysInMonth = DateUtils.getDaysInMonth(currentFilterYear, currentFilterMonth);
+    List<FlSpot> spots = _getChartSpots(currentM, currentY, daysInMonth);
+    List<dynamic> filteredTrainings = _trainings.where((item) {
+      List<String> parts = item['date'].split('/');
+      return parts[1] == currentM.toString().padLeft(2, '0') && parts[2] == currentY.toString();
+    }).toList();
 
-    List<FlSpot> spots = _getChartSpots(currentFilterMonth, currentFilterYear, daysInMonth);
-
-    double maxY = 0;
-    for (var spot in spots) {
-      if (spot.y > maxY) maxY = spot.y;
-    }
-    maxY = maxY < 60 ? 60 : maxY + 15;
+    double maxY = 60;
+    for (var spot in spots) { if (spot.y > maxY) maxY = spot.y; }
+    maxY += 15;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Meus Treinos"),
-        centerTitle: true,
-        backgroundColor: Colors.green,
-      ),
+      appBar: AppBar(title: const Text("Meus Treinos"), centerTitle: true, backgroundColor: Colors.green),
       drawer: const CustomDrawer(),
       backgroundColor: Colors.grey[100],
       body: Column(
         children: [
           Container(
-            height: 300,
             margin: const EdgeInsets.all(16.0),
-            padding: const EdgeInsets.fromLTRB(12.0, 12.0, 16.0, 12.0),
+            padding: const EdgeInsets.all(12.0),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12.0),
-              boxShadow: const [
-                BoxShadow(color: Colors.black12, blurRadius: 4, spreadRadius: 1)
-              ],
+              color: Colors.white, 
+              borderRadius: BorderRadius.circular(12.0), 
+              boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)]
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      "Minutos por Dia",
-                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 16),
-                    ),
+                    const Text("Tempo de Treino (min)", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
                     DropdownButton<String>(
                       value: _selectedMonthYear,
-                      items: availableMonths.map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value, style: const TextStyle(fontSize: 14)),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          setState(() {
-                            _selectedMonthYear = newValue;
-                          });
-                        }
-                      },
                       underline: const SizedBox(),
-                      icon: const Icon(Icons.arrow_drop_down, color: Colors.green),
+                      icon: const Icon(Icons.calendar_month, color: Colors.green),
+                      items: availableMonths.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
+                      onChanged: (val) { if (val != null) setState(() { _selectedMonthYear = val; }); },
                     ),
                   ],
                 ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 15.0),
-                    child: LineChart(
-                      LineChartData(
-                        minY: 0,
-                        maxY: maxY,
-                        minX: 1,
-                        maxX: daysInMonth.toDouble(),
-                        lineTouchData: LineTouchData(
-                          touchTooltipData: LineTouchTooltipData(
-                            getTooltipItems: (List<LineBarSpot> touchedSpots) {
-                              return touchedSpots.map((spot) {
-                                return LineTooltipItem(
-                                  'Dia ${spot.x.toInt()}\n${spot.y.toInt()} min',
-                                  const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                );
-                              }).toList();
-                            },
-                          ),
-                        ),
-                        lineBarsData: [
-                          LineChartBarData(
-                            spots: spots,
-                            isCurved: false,
-                            color: Colors.green,
-                            barWidth: 2,
-                            dotData: FlDotData(
-                              show: true,
-                              getDotPainter: (spot, percent, barData, index) {
-                                return FlDotCirclePainter(
-                                  radius: 3,
-                                  color: Colors.green,
-                                  strokeWidth: 1,
-                                  strokeColor: Colors.white,
-                                );
-                              },
-                            ),
-                            belowBarData: BarAreaData(
-                              show: true,
-                              color: Colors.green.withOpacity(0.15),
-                            ),
-                          ),
-                        ],
-                        titlesData: FlTitlesData(
-                          bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              reservedSize: 22,
-                              interval: 1,
-                              getTitlesWidget: (value, meta) {
-                                if (value == 0 || value > daysInMonth) return const SizedBox.shrink();
-                                return SideTitleWidget(
-                                  axisSide: meta.axisSide,
-                                  space: 4,
-                                  child: Text(
-                                    '${value.toInt()}',
-                                    style: const TextStyle(fontSize: 9, color: Colors.black87),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                          leftTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              reservedSize: 32,
-                              interval: 15,
-                              getTitlesWidget: (value, meta) {
-                                return SideTitleWidget(
-                                  axisSide: meta.axisSide,
-                                  space: 4,
-                                  child: Text(
-                                    '${value.toInt()}m',
-                                    style: const TextStyle(fontSize: 10, color: Colors.black87),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                        gridData: FlGridData(
-                          show: true,
-                          drawVerticalLine: false,
-                          horizontalInterval: 15,
-                          getDrawingHorizontalLine: (value) {
-                            return const FlLine(color: Colors.black12, strokeWidth: 1);
-                          },
-                        ),
-                        borderData: FlBorderData(show: false),
-                      ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 200,
+                  child: LineChart(LineChartData(
+                    minY: 0, 
+                    maxY: maxY, 
+                    minX: 1, 
+                    maxX: daysInMonth.toDouble(),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: spots, 
+                        isCurved: true, // Agora curvo como no histórico
+                        color: Colors.green, 
+                        barWidth: 3, // Espessura idêntica
+                        dotData: const FlDotData(show: true),
+                        belowBarData: BarAreaData(show: true, color: Colors.green.withOpacity(0.1))
+                      )
+                    ],
+                    titlesData: FlTitlesData(
+                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      bottomTitles: AxisTitles(sideTitles: SideTitles(
+                        showTitles: true, 
+                        getTitlesWidget: (val, meta) {
+                          if (val % 5 == 0 || val == 1 || val == daysInMonth) {
+                            return Text(val.toInt().toString(), style: const TextStyle(fontSize: 10));
+                          }
+                          return const SizedBox();
+                        }
+                      )),
                     ),
-                  ),
+                    gridData: const FlGridData(show: true, drawVerticalLine: false),
+                    borderData: FlBorderData(show: false),
+                  )),
                 ),
               ],
             ),
           ),
-          Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-            elevation: 3,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  Text(
-                    "Registro Rápido ($todayStr)",
-                    style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16.0),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          
+          if (_selectedMonthYear == availableMonths.first)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Card(
+                child: ListTile(
+                  title: Text("Registrar Hoje ($todayStr)", style: const TextStyle(fontWeight: FontWeight.bold)),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      OutlinedButton.icon(
-                        onPressed: () => _processTrainingEntry(todayStr, false, 0),
-                        icon: const Icon(Icons.hotel, color: Colors.blue),
-                        label: const Text("Descanso", style: TextStyle(color: Colors.blue)),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.blue),
-                        ),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () => _showDurationDialog(todayStr),
-                        icon: const Icon(Icons.fitness_center, color: Colors.white),
-                        label: const Text("Treinei", style: TextStyle(color: Colors.white)),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                      ),
+                      IconButton(icon: const Icon(Icons.hotel, color: Colors.blue), onPressed: () => _processTrainingEntry(todayStr, false, 0)),
+                      IconButton(icon: const Icon(Icons.fitness_center, color: Colors.green), onPressed: () => _showDurationDialog(todayStr)),
                     ],
-                  )
-                ],
+                  ),
+                ),
               ),
             ),
-          ),
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: ElevatedButton.icon(
-              onPressed: _showPastTrainingDialog,
-              icon: const Icon(Icons.calendar_month),
-              label: const Text("Adicionar registro anterior"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 50),
-              ),
+              onPressed: _showPastTrainingDialog, 
+              icon: const Icon(Icons.calendar_month), 
+              label: const Text("Novo Registro Manual"), 
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 45))
             ),
           ),
+          
           const Divider(),
           Expanded(
-            child: ListView.builder(
-              itemCount: _trainings.length,
-              itemBuilder: (context, index) {
-                final item = _trainings[index];
-                bool isTrained = item['trained'];
-
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: isTrained ? Colors.green : Colors.blue,
-                      child: Icon(
-                        isTrained ? Icons.fitness_center : Icons.hotel,
-                        color: Colors.white,
+            child: filteredTrainings.isEmpty 
+              ? const Center(child: Text("Nenhum registro neste mês."))
+              : ListView.builder(
+                  itemCount: filteredTrainings.length,
+                  itemBuilder: (context, index) {
+                    final item = filteredTrainings[index];
+                    int originalIndex = _trainings.indexOf(item);
+                    bool isTrained = item['trained'];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                      child: ListTile(
+                        leading: Icon(isTrained ? Icons.fitness_center : Icons.hotel, color: isTrained ? Colors.green : Colors.blue),
+                        title: Text(item['date'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text(isTrained ? '${item['duration']} minutos' : 'Descanso'),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(icon: const Icon(Icons.edit, color: Colors.blue, size: 20), onPressed: () => isTrained ? _showDurationDialog(item['date'], initialDuration: item['duration']) : _showPastTrainingDialog()),
+                            IconButton(icon: const Icon(Icons.delete, color: Colors.red, size: 20), onPressed: () => _confirmDelete(originalIndex)),
+                          ],
+                        ),
                       ),
-                    ),
-                    title: Text(
-                      item['date'],
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      isTrained ? 'Treino: ${item['duration']} minutos' : 'Dia de descanso',
-                      style: TextStyle(color: isTrained ? Colors.green[700] : Colors.blue[700]),
-                    ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _confirmDelete(index),
-                    ),
-                  ),
-                );
-              },
-            ),
+                    );
+                  },
+                ),
           ),
         ],
       ),

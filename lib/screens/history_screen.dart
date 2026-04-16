@@ -64,20 +64,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
     _saveHistory();
   }
 
-  void _deleteEntry(int index) {
+  void _deleteEntry(int indexInFullList) {
     setState(() {
-      _history.removeAt(index);
+      _history.removeAt(indexInFullList);
     });
     _saveHistory();
   }
 
-  void _confirmDelete(int index) {
+  void _confirmDelete(int indexInFullList) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text("Confirmar Exclusão"),
-          content: const Text("Deseja deletar este registro do histórico na nuvem?"),
+          content: const Text("Deseja deletar este registro do histórico?"),
           actions: [
             OutlinedButton(
               onPressed: () => Navigator.pop(context),
@@ -86,7 +86,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
             ElevatedButton(
               onPressed: () {
-                _deleteEntry(index);
+                _deleteEntry(indexInFullList);
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -98,34 +98,49 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  void _showWeightHeightDialog(String dateStr) {
-    TextEditingController weightCtrl = TextEditingController();
-    TextEditingController heightCtrl = TextEditingController(text: _history.isNotEmpty ? _history.first['height'].toString() : '175');
+  void _showWeightHeightDialog(String dateStr, {double? initialWeight, double? initialHeight}) {
+    TextEditingController weightCtrl = TextEditingController(text: initialWeight?.toString() ?? "");
+    TextEditingController heightCtrl = TextEditingController(
+      text: initialHeight?.toString() ?? (_history.isNotEmpty ? _history.first['height'].toString() : '175')
+    );
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text("Registro de Peso ($dateStr)"),
+          title: Text(initialWeight != null ? "Editar Registro ($dateStr)" : "Registro de Peso ($dateStr)"),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: weightCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: "Peso (kg)")),
-              TextField(controller: heightCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: "Altura (cm)")),
+              TextField(
+                controller: weightCtrl, 
+                keyboardType: TextInputType.number, 
+                decoration: const InputDecoration(labelText: "Peso (kg)", hintText: "Ex: 80.5")
+              ),
+              TextField(
+                controller: heightCtrl, 
+                keyboardType: TextInputType.number, 
+                decoration: const InputDecoration(labelText: "Altura (cm)", hintText: "Ex: 175")
+              ),
             ],
           ),
           actions: [
-            OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context), 
+              style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.green), foregroundColor: Colors.green),
+              child: const Text("Cancelar")
+            ),
             ElevatedButton(
               onPressed: () {
-                double w = double.tryParse(weightCtrl.text) ?? 0;
-                double h = double.tryParse(heightCtrl.text) ?? 0;
+                double w = double.tryParse(weightCtrl.text.replaceAll(',', '.')) ?? 0;
+                double h = double.tryParse(heightCtrl.text.replaceAll(',', '.')) ?? 0;
                 if (w > 0 && h > 0) {
                   Navigator.pop(context);
                   _processHistoryEntry(dateStr, w, h);
                 }
               },
-              child: const Text("Salvar"),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: const Text("Salvar", style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -133,14 +148,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  void _showPastEntryDialog() async {
-    DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now().subtract(const Duration(days: 1)),
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
-    );
-    if (pickedDate != null) _showWeightHeightDialog(_formatDate(pickedDate));
+  List<String> _getAvailableMonths() {
+    Set<String> months = {};
+    // Garante que o mês atual sempre apareça
+    DateTime now = DateTime.now();
+    months.add('${now.month.toString().padLeft(2, '0')}/${now.year}');
+    
+    // Adiciona meses que possuem registros
+    for (var item in _history) {
+      List<String> parts = item['date'].split('/');
+      months.add('${parts[1]}/${parts[2]}');
+    }
+    
+    List<String> sorted = months.toList();
+    sorted.sort((a, b) {
+      int valA = int.parse(a.split('/')[1]) * 100 + int.parse(a.split('/')[0]);
+      int valB = int.parse(b.split('/')[1]) * 100 + int.parse(b.split('/')[0]);
+      return valB.compareTo(valA);
+    });
+    return sorted;
   }
 
   List<FlSpot> _getChartSpots(int month, int year, int daysInMonth) {
@@ -157,10 +183,29 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    List<String> availableMonths = _getAvailableMonths();
+    if (!availableMonths.contains(_selectedMonthYear)) {
+      _selectedMonthYear = availableMonths.first;
+    }
+
     int currentM = int.parse(_selectedMonthYear.split('/')[0]);
     int currentY = int.parse(_selectedMonthYear.split('/')[1]);
-    int days = DateUtils.getDaysInMonth(currentY, currentM);
-    List<FlSpot> spots = _getChartSpots(currentM, currentY, days);
+    int daysInMonth = DateUtils.getDaysInMonth(currentY, currentM);
+    
+    List<FlSpot> spots = _getChartSpots(currentM, currentY, daysInMonth);
+    
+    // Filtra a lista para mostrar apenas o mês selecionado
+    List<dynamic> filteredHistory = _history.where((item) {
+      List<String> parts = item['date'].split('/');
+      return parts[1] == currentM.toString().padLeft(2, '0') && parts[2] == currentY.toString();
+    }).toList();
+
+    double minY = 0;
+    double maxY = 100;
+    if (spots.isNotEmpty) {
+      minY = spots.map((s) => s.y).reduce((a, b) => a < b ? a : b) - 5;
+      maxY = spots.map((s) => s.y).reduce((a, b) => a > b ? a : b) + 5;
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Histórico de Evolução'), centerTitle: true, backgroundColor: Colors.green),
@@ -168,40 +213,126 @@ class _HistoryScreenState extends State<HistoryScreen> {
       backgroundColor: Colors.grey[100],
       body: Column(
         children: [
+          // Seletor de Mês e Gráfico
           Container(
-            height: 250,
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
-            child: LineChart(LineChartData(
-              minY: 0,
-              lineBarsData: [LineChartBarData(spots: spots, isCurved: false, color: Colors.green, barWidth: 2)],
-              titlesData: FlTitlesData(
-                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              ),
-              gridData: const FlGridData(show: false),
-              borderData: FlBorderData(show: false),
-            )),
-          ),
-          ElevatedButton.icon(onPressed: _showPastEntryDialog, icon: const Icon(Icons.calendar_month), label: const Text("Adicionar registro anterior")),
-          const Divider(),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _history.length,
-              itemBuilder: (context, index) {
-                final item = _history[index];
-                final String status = calcularImc(item['weight'], item['height'] / 100).split(' (')[0];
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  child: ListTile(
-                    title: Text('${item['date']} - IMC: ${item['imc'].toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text('Peso: ${item['weight']}kg | Status: $status'),
-                    trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _confirmDelete(index)),
-                  ),
-                );
-              },
+            decoration: BoxDecoration(
+              color: Colors.white, 
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)]
             ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text("Evolução de Peso (kg)", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                    DropdownButton<String>(
+                      value: _selectedMonthYear,
+                      underline: const SizedBox(),
+                      icon: const Icon(Icons.calendar_month, color: Colors.green),
+                      items: availableMonths.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
+                      onChanged: (val) { if (val != null) setState(() { _selectedMonthYear = val; }); },
+                    )
+                  ],
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 200,
+                  child: LineChart(LineChartData(
+                    minY: minY < 0 ? 0 : minY,
+                    maxY: maxY,
+                    minX: 1,
+                    maxX: daysInMonth.toDouble(),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: spots, 
+                        isCurved: true, 
+                        color: Colors.green, 
+                        barWidth: 3,
+                        dotData: const FlDotData(show: true),
+                        belowBarData: BarAreaData(show: true, color: Colors.green.withOpacity(0.1))
+                      )
+                    ],
+                    titlesData: FlTitlesData(
+                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      bottomTitles: AxisTitles(sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (val, meta) {
+                          if (val % 5 == 0 || val == 1 || val == daysInMonth) {
+                            return Text(val.toInt().toString(), style: const TextStyle(fontSize: 10));
+                          }
+                          return const SizedBox();
+                        }
+                      )),
+                    ),
+                    gridData: const FlGridData(show: true, drawVerticalLine: false),
+                    borderData: FlBorderData(show: false),
+                  )),
+                ),
+              ],
+            ),
+          ),
+          
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                DateTime? pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime.now(),
+                );
+                if (pickedDate != null) _showWeightHeightDialog(_formatDate(pickedDate));
+              }, 
+              icon: const Icon(Icons.add), 
+              label: const Text("Novo Registro Manual"),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 45)),
+            ),
+          ),
+          
+          const SizedBox(height: 10),
+          const Divider(),
+          
+          Expanded(
+            child: filteredHistory.isEmpty 
+              ? const Center(child: Text("Nenhum registro neste mês.", style: TextStyle(color: Colors.grey)))
+              : ListView.builder(
+                  itemCount: filteredHistory.length,
+                  itemBuilder: (context, index) {
+                    final item = filteredHistory[index];
+                    // Encontrar o index original na lista completa para deletar/editar corretamente
+                    int originalIndex = _history.indexOf(item);
+                    final String status = calcularImc(item['weight'], item['height'] / 100).split(' (')[0];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      child: ListTile(
+                        title: Text('${item['date']} - ${item['weight']} kg', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text('IMC: ${item['imc'].toStringAsFixed(1)} ($status)'),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
+                              onPressed: () => _showWeightHeightDialog(
+                                item['date'], 
+                                initialWeight: (item['weight'] as num).toDouble(),
+                                initialHeight: (item['height'] as num).toDouble(),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                              onPressed: () => _confirmDelete(originalIndex),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
           ),
         ],
       ),
