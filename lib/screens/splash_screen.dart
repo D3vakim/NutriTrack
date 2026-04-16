@@ -27,27 +27,16 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     );
 
     _controller.forward();
-
-    // Inicia o carregamento dos dados do Supabase enquanto a animação roda
     _initAppData();
   }
 
   Future<void> _initAppData() async {
-    // Carrega todos os dados do banco para o cache do serviço
+    // Sincroniza dados com Supabase
     await SupabaseService().loadAllData();
 
-    if (_controller.isCompleted) {
-      _navigateToHome();
-    } else {
-      _controller.addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          _navigateToHome();
-        }
-      });
-    }
-  }
+    // Espera a animação de 3 segundos acabar
+    await Future.delayed(const Duration(seconds: 3));
 
-  void _navigateToHome() {
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const Home()),
