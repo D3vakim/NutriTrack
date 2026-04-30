@@ -1,64 +1,52 @@
 import 'package:flutter/material.dart';
-import '../screens/home_screen.dart';
-import '../screens/diet_screen.dart';
-import '../screens/history_screen.dart';
-import '../screens/training_screen.dart';
+import '../services/supabase_service.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final supabaseService = SupabaseService();
+    final lastImcData = supabaseService.imcHistory.isNotEmpty 
+        ? supabaseService.imcHistory.first 
+        : null;
+
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(color: Colors.green),
-            child: Text(
-              'Menu',
-              style: TextStyle(color: Colors.white, fontSize: 24),
+          UserAccountsDrawerHeader(
+            decoration: const BoxDecoration(color: Colors.green),
+            accountName: const Text(
+              'NutriTrack',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            accountEmail: lastImcData != null 
+                ? Text('Último IMC: ${lastImcData['imc'].toStringAsFixed(2)} (${lastImcData['date']})')
+                : const Text('Nenhum registro ainda'),
+            currentAccountPicture: CircleAvatar(
+              backgroundColor: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Image.asset('assets/images/logo.png'),
+              ),
             ),
           ),
-          ListTile(
-            leading: const Icon(Icons.calculate, color: Colors.green),
-            title: const Text('Calculadora de IMC'),
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const Home()),
-              );
-            },
+          const ListTile(
+            leading: Icon(Icons.info_outline, color: Colors.green),
+            title: Text('Sobre o App'),
           ),
-          ListTile(
-            leading: const Icon(Icons.history, color: Colors.green),
-            title: const Text('Histórico de Evolução'),
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const HistoryScreen()),
-              );
-            },
+          const ListTile(
+            leading: Icon(Icons.settings, color: Colors.green),
+            title: Text('Configurações'),
           ),
-          ListTile(
-            leading: const Icon(Icons.restaurant_menu, color: Colors.green),
-            title: const Text('Minha Dieta'),
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const DietScreen()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.fitness_center, color: Colors.green),
-            title: const Text('Meus Treinos'),
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const TrainingScreen()),
-              );
-            },
+          const Divider(),
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              'Versão 1.0.0',
+              style: TextStyle(color: Colors.grey),
+            ),
           ),
         ],
       ),

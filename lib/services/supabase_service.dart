@@ -70,22 +70,33 @@ class SupabaseService {
   }
 
   /// Une duas listas de históricos sem duplicar registros da mesma data.
+  /// O registro com o timestamp mais recente (maior valor) vence em caso de conflito.
   List<dynamic> _mergeLists(List<dynamic> local, List<dynamic> cloud) {
     final Map<String, dynamic> merged = {};
     
     // Adiciona itens da nuvem primeiro
     for (var item in cloud) {
-      merged[item['date']] = item;
+      final String date = item['date'];
+      merged[date] = item;
     }
     
-    // Adiciona itens locais (se houver conflito de data, o local vence pois é o mais recente)
+    // Adiciona itens locais e compara timestamps
     for (var item in local) {
-      merged[item['date']] = item;
+      final String date = item['date'];
+      if (merged.containsKey(date)) {
+        final int cloudTs = merged[date]['timestamp'] ?? 0;
+        final int localTs = item['timestamp'] ?? 0;
+        
+        // Se o local for mais novo (ou o cloud não tiver ts), o local vence
+        if (localTs >= cloudTs) {
+          merged[date] = item;
+        }
+      } else {
+        merged[date] = item;
+      }
     }
 
-    final result = merged.values.toList();
-    // Ordenar por data (opcional aqui, já que as telas ordenam)
-    return result;
+    return merged.values.toList();
   }
 
   // --- PERSISTÊNCIA LOCAL ---

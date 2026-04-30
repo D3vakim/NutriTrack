@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
-import '../widgets/custom_drawer.dart';
 
 class DietScreen extends StatefulWidget {
   const DietScreen({super.key});
@@ -52,14 +51,10 @@ class _DietScreenState extends State<DietScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text("Aplicar Dieta Sugerida"),
-          content: const Text("Tem certeza que deseja substituir toda a sua dieta atual pela dieta sugerida pelo nutricionista? Isso apagará seus registros atuais."),
+          content: const Text("Tem certeza que deseja substituir toda a sua dieta atual pela dieta sugerida?"),
           actions: [
             OutlinedButton(
               onPressed: () => Navigator.pop(context),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.green),
-                foregroundColor: Colors.green,
-              ),
               child: const Text("Cancelar"),
             ),
             ElevatedButton(
@@ -67,61 +62,45 @@ class _DietScreenState extends State<DietScreen> {
                 setState(() {
                   _breakfast = [
                     "Cacau em pó (4g) OU Café (80ml)",
-                    "Ovo de galinha cozido (110g) OU Peito de frango desfiado (50g)",
-                    "Pera Willians crua (110g) OU Morango (200g) OU Mamão papaia (135g) OU Goiaba (105g)",
-                    "Torrada integral (40g) OU Pão de forma integral (50g) OU Farelo de aveia (60g) OU Farinha de linhaça (60g)"
+                    "Ovo cozido (110g) OU Frango desfiado (50g)",
+                    "Pera (110g) OU Morango (200g) OU Mamão (135g)",
+                    "Torrada integral (40g) OU Pão de forma integral (50g)"
                   ];
                   _lunch = [
-                    "Acelga (40g) OU Agrião (35g) OU Alface (40g) OU Alface roxa (40g)",
-                    "Abóbora moranga cozida (220g) OU Abobrinha (280g) OU Beterraba (120g) OU Cenoura (150g)",
-                    "Filé de frango grelhado (100g) OU Coxa de frango (100g) OU Ovo cozido (220g) OU Filé de tilápia (120g)",
-                    "Arroz integral cozido (100g) OU Batata doce (200g) OU Batata baroa (175g) OU Cará (200g)",
-                    "Feijão carioca cozido (130g) OU Grão de bico (90g) OU Lentilha (70g)",
+                    "Vegetais folhosos à vontade (Alface, Acelga)",
+                    "Legumes cozidos (150g) (Cenoura, Chuchu)",
+                    "Filé de frango (100g) OU Tilápia (120g)",
+                    "Arroz integral (100g) OU Batata doce (200g)",
+                    "Feijão carioca (130g)",
                     "Azeite de oliva (8ml)"
                   ];
                   _supper = [
-                    "Maçã Fuji (90g) OU Uva passa (18g) OU Maçã argentina (80g) OU Laranja lima (140g)",
-                    "Semente de linhaça (30g) OU Castanha-do-Brasil (16g) OU Amendoim (19g) OU Noz crua (20g)",
-                    "Queijo minas frescal (40g) OU Ricota (70g) OU Cottage (60g) OU Minas frescal light (40g)"
+                    "Maçã (90g) OU Laranja (140g)",
+                    "Castanha-do-Brasil (16g) OU Amendoim (19g)",
+                    "Queijo minas frescal (40g) OU Ricota (70g)"
                   ];
                   _dinner = [
-                    "Alface roxa (40g) OU Couve refogada (40g) OU Acelga (40g) OU Alface (40g)",
-                    "Brócolis cozido (240g) OU Couve-flor (240g) OU Tomate salada (180g) OU Chuchu (180g)",
-                    "Filé de tilápia cozido (90g) OU Cupim assado (75g) OU Peito de frango (75g) OU Ovo (150g)",
-                    "Arroz integral cozido (60g) OU Cará (120g) OU Macarrão integral (75g) OU Batata doce (120g)",
-                    "Feijão carioca cozido (130g) OU Grão de bico (90g)",
-                    "Laranja lima (140g) OU Mamão formosa (170g) OU Pera Park (110g) OU Uva passa (18g)"
+                    "Salada de folhas à vontade",
+                    "Brócolis ou Couve-flor (240g)",
+                    "Filé de tilápia (90g) OU Ovo (150g)",
+                    "Arroz integral (60g) OU Batata doce (120g)",
+                    "Laranja (140g) OU Mamão (170g)"
                   ];
                   _substitutions = [
-                    "Grupo 1 (Baixa Caloria): Cacau em pó, Café, Chás, Água com limão",
-                    "Grupo 2 (Vegetais A): Acelga, Agrião, Alface, Espinafre, Rúcula, Repolho, etc.",
-                    "Grupo 3 (Vegetais B): Abobrinha, Abóbora, Beterraba, Brócolis, Cenoura, Chuchu, etc.",
-                    "Grupo 4 (Carnes/Proteínas): Frango, Ovo, Tilápia, Atum, Patinho, Salmão, Contra filé, etc.",
-                    "Grupo 5 (Cereais/Tubérculos): Arroz, Batata doce/inglesa, Macarrão, Quinoa, Cará, Inhame",
-                    "Grupo 6 (Leguminosas): Feijão (todos), Grão de bico, Lentilha, Ervilha",
-                    "Grupo 7 (Óleos/Gorduras): Azeite, Manteiga, Manteiga Ghee, Óleo de soja",
-                    "Grupo 8 (Gordurosos): Azeitona, Bacon, Cream Cheese, Creme de leite, Torresmo",
-                    "Grupo 9 (Frutas Comuns): Maçã, Morango, Mamão, Laranja, Pera, Uva, Banana, etc.",
-                    "Grupo 10 (Frutas Oleosas): Abacate, Avocado, Coco, Açaí",
-                    "Grupo 11 (Nozes/Sementes): Linhaça, Castanhas, Amendoim, Chia, Semente de abóbora",
-                    "Grupo 12 (Pães/Fibras): Torrada, Aveia, Pão de forma, Biscoito de polvilho, Tapioca",
-                    "Grupo 13 (Laticínios): Queijo minas, Ricota, Cottage, Iogurte natural, Leite, Coalhada",
-                    "Grupo 14 (Suplementos): Whey Protein, Caseína, Proteína de soja",
-                    "Grupo 15 (Açúcares): Açúcar mascavo/demerara, Melado, Xylitol, Maltodextrina"
+                    "G1 (Baixa Caloria): Chás, Café, Água com limão",
+                    "G2 (Vegetais A): Acelga, Agrião, Alface, Espinafre",
+                    "G3 (Vegetais B): Abobrinha, Abóbora, Beterraba",
+                    "G4 (Proteínas): Frango, Ovo, Tilápia, Patinho",
+                    "G5 (Cereais): Arroz, Batata, Macarrão, Quinoa"
                   ];
                 });
                 _saveDietData();
                 Navigator.pop(context);
-
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Sua dieta personalizada foi aplicada com sucesso!'),
-                    backgroundColor: Colors.green,
-                  ),
+                  const SnackBar(content: Text('Dieta aplicada com sucesso!'), backgroundColor: Colors.green),
                 );
               },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-              child: const Text("Substituir", style: TextStyle(color: Colors.white)),
+              child: const Text("Confirmar"),
             ),
           ],
         );
@@ -142,21 +121,10 @@ class _DietScreenState extends State<DietScreen> {
           content: TextField(
             controller: controller,
             textCapitalization: TextCapitalization.sentences,
-            maxLines: null,
-            keyboardType: TextInputType.multiline,
-            decoration: const InputDecoration(
-              hintText: "Digite o alimento e a quantidade",
-            ),
+            decoration: const InputDecoration(hintText: "Ex: 1 maçã média"),
           ),
           actions: [
-            OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.green),
-                foregroundColor: Colors.green,
-              ),
-              child: const Text("Cancelar"),
-            ),
+            OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text("Cancelar")),
             ElevatedButton(
               onPressed: () {
                 if (controller.text.trim().isNotEmpty) {
@@ -171,8 +139,7 @@ class _DietScreenState extends State<DietScreen> {
                   Navigator.pop(context);
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-              child: const Text("Salvar", style: TextStyle(color: Colors.white)),
+              child: const Text("Salvar"),
             ),
           ],
         );
@@ -187,86 +154,129 @@ class _DietScreenState extends State<DietScreen> {
     _saveDietData();
   }
 
-  void _confirmDelete(List<String> list, int index) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Confirmar Exclusão"),
-          content: const Text("Tem certeza que deseja deletar este item da sua dieta?"),
-          actions: [
-            OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.green),
-                foregroundColor: Colors.green,
-              ),
-              child: const Text("Cancelar"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                _deleteItem(list, index);
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text("Deletar", style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildDietSection(String title, List<String> list) {
+  Widget _buildDietSection(String title, List<String> list, IconData icon, Color bgColor, Color iconColor) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 12.0),
-      elevation: 2,
-      child: ExpansionTile(
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18.0,
-            color: Colors.green,
-            fontWeight: FontWeight.bold,
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 12),
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: Colors.grey.shade200, width: 1),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          childrenPadding: EdgeInsets.zero,
+          leading: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: iconColor, size: 20),
           ),
-        ),
-        children: [
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: list.length,
-            itemBuilder: (context, index) {
-              return ListTile(
-                title: Text(list[index]),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.blue),
-                      onPressed: () => _showItemDialog(title, list, index: index),
+          title: Text(
+            title,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[800],
+            ),
+          ),
+          subtitle: Text(
+            "${list.length} ${list.length == 1 ? 'item' : 'itens'}",
+            style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+          ),
+          iconColor: Theme.of(context).colorScheme.primary,
+          collapsedIconColor: Theme.of(context).colorScheme.primary,
+          children: [
+            ...list.asMap().entries.map((entry) {
+              int index = entry.key;
+              String itemText = entry.value;
+              return Column(
+                children: [
+                  ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                    leading: Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _confirmDelete(list, index),
+                    title: Text(
+                      itemText,
+                      style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.blue),
+                          iconSize: 18,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () => _showItemDialog(title, list, index: index),
+                        ),
+                        const SizedBox(width: 12),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          iconSize: 18,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () => _deleteItem(list, index),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (index != list.length - 1)
+                    Divider(
+                      height: 1,
+                      indent: 16,
+                      endIndent: 16,
+                      color: Colors.grey.shade100,
+                    ),
+                ],
+              );
+            }).toList(),
+            InkWell(
+              onTap: () => _showItemDialog(title, list),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9FBF9),
+                  border: Border(
+                    top: BorderSide(color: Colors.grey.shade100),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.add,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      "Adicionar item",
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
-              );
-            },
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: ElevatedButton.icon(
-              onPressed: () => _showItemDialog(title, list),
-              icon: const Icon(Icons.add),
-              label: const Text("Adicionar Item"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -274,31 +284,31 @@ class _DietScreenState extends State<DietScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Minha Dieta"),
-        centerTitle: true,
-        backgroundColor: Colors.green,
-      ),
-      drawer: const CustomDrawer(),
-      backgroundColor: Colors.grey[100],
+      appBar: AppBar(title: const Text("Minha Dieta")),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            _buildDietSection("Café da Manhã (08:00)", _breakfast),
-            _buildDietSection("Almoço (12:00)", _lunch),
-            _buildDietSection("Lanche (16:30)", _supper),
-            _buildDietSection("Jantar (20:00)", _dinner),
-            _buildDietSection("Grupos de Substituição", _substitutions),
-            const SizedBox(height: 10),
-            ElevatedButton.icon(
-              onPressed: _applySuggestedDiet,
-              icon: const Icon(Icons.assignment_turned_in),
-              label: const Text("Aplicar Dieta Sugerida"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 50),
+            _buildDietSection("Café da Manhã", _breakfast, Icons.wb_sunny_outlined, const Color(0xFFFFF8E1), const Color(0xFFF57F17)),
+            _buildDietSection("Almoço", _lunch, Icons.lunch_dining_outlined, const Color(0xFFE8F5E9), const Color(0xFF2E7D32)),
+            _buildDietSection("Lanche", _supper, Icons.emoji_food_beverage_outlined, const Color(0xFFFFEBEE), const Color(0xFFE53935)),
+            _buildDietSection("Jantar", _dinner, Icons.dinner_dining_outlined, const Color(0xFFE8EAF6), const Color(0xFF3949AB)),
+            _buildDietSection("Grupos de Substituição", _substitutions, Icons.swap_horiz_rounded, const Color(0xFFF3E5F5), const Color(0xFF8E24AA)),
+            const SizedBox(height: 16),
+            Card(
+              elevation: 0,
+              color: const Color(0xFFFFF8E1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+                side: const BorderSide(color: Color(0xFFFFF176), width: 1),
+              ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                leading: const Icon(Icons.assignment_turned_in_outlined, color: Color(0xFFF57F17), size: 28),
+                title: const Text("Aplicar dieta sugerida", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                subtitle: const Text("Substitui sua dieta atual pelo plano do nutricionista", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                onTap: _applySuggestedDiet,
               ),
             ),
             const SizedBox(height: 20),

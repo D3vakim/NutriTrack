@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../services/supabase_service.dart';
-import '../widgets/custom_drawer.dart';
 
 class TrainingScreen extends StatefulWidget {
   const TrainingScreen({super.key});
@@ -122,7 +121,6 @@ class _TrainingScreenState extends State<TrainingScreen> {
           actions: [
             OutlinedButton(
               onPressed: () => Navigator.pop(context), 
-              style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.green), foregroundColor: Colors.green),
               child: const Text("Cancelar")
             ),
             ElevatedButton(
@@ -133,7 +131,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
                   _processTrainingEntry(dateStr, true, mins);
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
               child: const Text("Salvar", style: TextStyle(color: Colors.white)),
             ),
           ],
@@ -165,7 +163,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
             ),
             ElevatedButton(
               onPressed: () { Navigator.pop(context); _showDurationDialog(dateStr); }, 
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
               child: const Text("Sim, Treinei", style: TextStyle(color: Colors.white)),
             ),
           ],
@@ -180,7 +178,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
     months.add('${now.month.toString().padLeft(2, '0')}/${now.year}');
     for (var item in _trainings) {
       List<String> parts = item['date'].split('/');
-      months.add('${parts[1]}/${parts[2]}');
+      if (parts.length == 3) {
+        months.add('${parts[1]}/${parts[2]}');
+      }
     }
     List<String> sorted = months.toList();
     sorted.sort((a, b) {
@@ -216,7 +216,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
     List<FlSpot> spots = _getChartSpots(currentM, currentY, daysInMonth);
     List<dynamic> filteredTrainings = _trainings.where((item) {
       List<String> parts = item['date'].split('/');
-      return parts[1] == currentM.toString().padLeft(2, '0') && parts[2] == currentY.toString();
+      return parts.length == 3 && parts[1] == currentM.toString().padLeft(2, '0') && parts[2] == currentY.toString();
     }).toList();
 
     double maxY = 60;
@@ -224,9 +224,7 @@ class _TrainingScreenState extends State<TrainingScreen> {
     maxY += 15;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Meus Treinos"), centerTitle: true, backgroundColor: Colors.green),
-      drawer: const CustomDrawer(),
-      backgroundColor: Colors.grey[100],
+      appBar: AppBar(title: const Text("Meus Treinos")),
       body: Column(
         children: [
           Container(
@@ -235,18 +233,37 @@ class _TrainingScreenState extends State<TrainingScreen> {
             decoration: BoxDecoration(
               color: Colors.white, 
               borderRadius: BorderRadius.circular(12.0), 
-              boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)]
+              border: Border.all(color: Colors.grey.shade100, width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.shade100,
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                )
+              ]
             ),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("Tempo de Treino (min)", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+                    Text(
+                      "Tempo de Treino (min)", 
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold, 
+                        color: Theme.of(context).colorScheme.primary
+                      )
+                    ),
                     DropdownButton<String>(
                       value: _selectedMonthYear,
                       underline: const SizedBox(),
-                      icon: const Icon(Icons.calendar_month, color: Colors.green),
+                      icon: const Icon(Icons.calendar_month),
+                      style: TextStyle(
+                        fontSize: 13, 
+                        color: Theme.of(context).colorScheme.primary, 
+                        fontWeight: FontWeight.w500
+                      ),
+                      dropdownColor: Colors.white,
                       items: availableMonths.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
                       onChanged: (val) { if (val != null) setState(() { _selectedMonthYear = val; }); },
                     ),
@@ -263,9 +280,9 @@ class _TrainingScreenState extends State<TrainingScreen> {
                     lineBarsData: [
                       LineChartBarData(
                         spots: spots, 
-                        isCurved: true, // Agora curvo como no histórico
+                        isCurved: true, 
                         color: Colors.green, 
-                        barWidth: 3, // Espessura idêntica
+                        barWidth: 3, 
                         dotData: const FlDotData(show: true),
                         belowBarData: BarAreaData(show: true, color: Colors.green.withOpacity(0.1))
                       )
@@ -295,13 +312,31 @@ class _TrainingScreenState extends State<TrainingScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Card(
+                elevation: 0,
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.grey.shade200, width: 1),
+                ),
                 child: ListTile(
-                  title: Text("Registrar Hoje ($todayStr)", style: const TextStyle(fontWeight: FontWeight.bold)),
+                  title: Text("Registrar Hoje ($todayStr)", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      IconButton(icon: const Icon(Icons.hotel, color: Colors.blue), onPressed: () => _processTrainingEntry(todayStr, false, 0)),
-                      IconButton(icon: const Icon(Icons.fitness_center, color: Colors.green), onPressed: () => _showDurationDialog(todayStr)),
+                      Tooltip(
+                        message: "Registrar descanso",
+                        child: IconButton(
+                          icon: const Icon(Icons.hotel, color: Colors.blue), 
+                          onPressed: () => _processTrainingEntry(todayStr, false, 0)
+                        ),
+                      ),
+                      Tooltip(
+                        message: "Registrar treino",
+                        child: IconButton(
+                          icon: const Icon(Icons.fitness_center, color: Colors.green), 
+                          onPressed: () => _showDurationDialog(todayStr)
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -309,36 +344,111 @@ class _TrainingScreenState extends State<TrainingScreen> {
             ),
 
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.all(16.0),
             child: ElevatedButton.icon(
               onPressed: _showPastTrainingDialog, 
               icon: const Icon(Icons.calendar_month), 
               label: const Text("Novo Registro Manual"), 
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 45))
+              style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 45))
             ),
           ),
           
           const Divider(),
           Expanded(
             child: filteredTrainings.isEmpty 
-              ? const Center(child: Text("Nenhum registro neste mês."))
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.fitness_center, size: 64, color: Colors.grey[300]),
+                      const SizedBox(height: 12),
+                      Text(
+                        "Nenhum treino registrado",
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.grey[500]),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        "Registre seus treinos para acompanhar sua frequência",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 13, color: Colors.grey[400]),
+                      ),
+                    ],
+                  ),
+                )
               : ListView.builder(
                   itemCount: filteredTrainings.length,
                   itemBuilder: (context, index) {
                     final item = filteredTrainings[index];
                     int originalIndex = _trainings.indexOf(item);
                     bool isTrained = item['trained'];
+                    
                     return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-                      child: ListTile(
-                        leading: Icon(isTrained ? Icons.fitness_center : Icons.hotel, color: isTrained ? Colors.green : Colors.blue),
-                        title: Text(item['date'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text(isTrained ? '${item['duration']} minutos' : 'Descanso'),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
+                      elevation: 0,
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: Colors.grey.shade200, width: 1),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Row(
                           children: [
-                            IconButton(icon: const Icon(Icons.edit, color: Colors.blue, size: 20), onPressed: () => isTrained ? _showDurationDialog(item['date'], initialDuration: item['duration']) : _showPastTrainingDialog()),
-                            IconButton(icon: const Icon(Icons.delete, color: Colors.red, size: 20), onPressed: () => _confirmDelete(originalIndex)),
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: isTrained ? const Color(0xFFE8F5E9) : const Color(0xFFE3F2FD),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              alignment: Alignment.center,
+                              child: Icon(
+                                isTrained ? Icons.fitness_center : Icons.hotel,
+                                color: isTrained ? const Color(0xFF2E7D32) : const Color(0xFF1565C0),
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item['date'],
+                                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: isTrained ? const Color(0xFFE8F5E9) : const Color(0xFFE3F2FD),
+                                      borderRadius: BorderRadius.circular(99),
+                                    ),
+                                    child: Text(
+                                      isTrained ? "${item['duration']} minutos" : "Dia de descanso",
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                        color: isTrained ? const Color(0xFF2E7D32) : const Color(0xFF1565C0),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
+                                  onPressed: () => isTrained ? _showDurationDialog(item['date'], initialDuration: item['duration']) : _showPastTrainingDialog(),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                                  onPressed: () => _confirmDelete(originalIndex),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),

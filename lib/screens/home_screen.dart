@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
 import '../utils/calculadora_logic.dart';
-import '../widgets/custom_drawer.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -17,7 +16,6 @@ class _HomeState extends State<Home> {
 
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   
-  // Variáveis para o resultado temporário
   String? _resultText;
   double? _lastWeight;
   double? _lastHeight;
@@ -64,6 +62,7 @@ class _HomeState extends State<Home> {
                     'weight': _lastWeight,
                     'height': _lastHeight,
                     'imc': _lastImc,
+                    'timestamp': DateTime.now().millisecondsSinceEpoch,
                   };
                   await _supabaseService.saveIMC(history);
                   if (mounted) {
@@ -86,6 +85,7 @@ class _HomeState extends State<Home> {
         'weight': _lastWeight,
         'height': _lastHeight,
         'imc': _lastImc,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
       });
       await _supabaseService.saveIMC(history);
       if (mounted) {
@@ -168,83 +168,140 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+    final Color resultColor = _lastImc != null ? getImcColor(_lastImc!) : Theme.of(context).primaryColor;
+    final Color resultBgColor = _lastImc != null ? getImcBackgroundColor(_lastImc!) : Colors.white;
+
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Calculadora de IMC"),
-        centerTitle: true,
-        backgroundColor: Colors.green,
+        title: const Text("NutriTrack - Calculadora"),
         actions: [
           IconButton(icon: const Icon(Icons.refresh), onPressed: _resetFields)
         ],
       ),
-      drawer: const CustomDrawer(),
-      backgroundColor: Colors.white,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              const Icon(Icons.person_outline, size: 100.0, color: Colors.green),
+              Card(
+                elevation: 0,
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.grey.shade300, width: 1),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.monitor_weight_outlined, color: Color(0xFF2E7D32), size: 32),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Calculadora de IMC",
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          ),
+                          Text(
+                            "Insira seus dados abaixo",
+                            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              
               TextFormField(
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: "Peso (kg)", labelStyle: TextStyle(color: Colors.green)),
+                decoration: const InputDecoration(
+                  labelText: "Peso (kg)", 
+                ),
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.green, fontSize: 25.0),
                 controller: weightController,
                 validator: (value) => (value == null || value.isEmpty) ? "Insira seu Peso!" : null,
               ),
+              const SizedBox(height: 16),
               TextFormField(
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: "Altura (cm)", labelStyle: TextStyle(color: Colors.green)),
+                decoration: const InputDecoration(
+                  labelText: "Altura (cm)", 
+                ),
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.green, fontSize: 25.0),
                 controller: heightController,
                 validator: (value) => (value == null || value.isEmpty) ? "Insira sua Altura!" : null,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 32),
               SizedBox(
-                height: 50.0,
+                height: 56.0,
                 child: ElevatedButton(
                   onPressed: () {
                     if (_formKey.currentState?.validate() ?? false) {
                       _validateAndCalculate();
                     }
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-                  child: const Text("Calcular", style: TextStyle(fontSize: 22.0)),
+                  style: ElevatedButton.styleFrom(),
+                  child: const Text("CALCULAR IMC", style: TextStyle(fontSize: 18.0, letterSpacing: 1.2)),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 32),
               
-              // Card de Resultado Temporário
               if (_resultText != null) 
                 Card(
-                  elevation: 4,
-                  color: Colors.green[50],
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  elevation: 0,
+                  color: resultBgColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(color: resultColor.withOpacity(0.4), width: 0.5)
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       children: [
-                        const Text("Resultado do Cálculo", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)),
-                        const SizedBox(height: 10),
-                        Text(_resultText!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.green, fontSize: 22.0, fontWeight: FontWeight.bold)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(getImcIcon(_lastImc!), color: getImcColor(_lastImc!), size: 28),
+                            const SizedBox(width: 10),
+                            const Text(
+                              "Resultado do Cálculo", 
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 15),
+                        Text(
+                          _resultText!, 
+                          textAlign: TextAlign.center, 
+                          style: TextStyle(color: getImcColor(_lastImc!), fontSize: 20, fontWeight: FontWeight.bold)
+                        ),
                         const Divider(height: 30),
-                        const Text("Deseja salvar esta medida na sua evolução pessoal?", textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: Colors.black54)),
+                        const Text(
+                          "Deseja salvar esta medida na sua evolução pessoal?", 
+                          textAlign: TextAlign.center, 
+                          style: TextStyle(fontSize: 14, color: Colors.black54)
+                        ),
                         const SizedBox(height: 15),
                         ElevatedButton.icon(
                           onPressed: _saveToHistory,
                           icon: const Icon(Icons.history, color: Colors.white),
                           label: const Text("Salvar no meu Histórico", style: TextStyle(color: Colors.white)),
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green, minimumSize: const Size(double.infinity, 45)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: getImcColor(_lastImc!), 
+                            minimumSize: const Size(double.infinity, 45)
+                          ),
                         )
                       ],
                     ),
                   ),
                 ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 40),
             ],
           ),
         ),
