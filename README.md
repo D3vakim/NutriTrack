@@ -3,13 +3,13 @@
 
 
 
-# 📱 NutriTrack
+# NutriTrack
 
 Aplicativo multiplataforma desenvolvido em Flutter com foco em acompanhamento nutricional e organização de hábitos saudáveis.
 
 ---
 
-## 📌 Sobre o Projeto
+## Sobre o Projeto
 
 O **NutriTrack** é uma solução criada para ajudar usuários a monitorar sua alimentação, acompanhar metas nutricionais e melhorar sua qualidade de vida de forma prática e intuitiva.
 
@@ -17,17 +17,17 @@ Este projeto faz parte do desenvolvimento de uma startup, incluindo documentaç�
 
 ---
 
-## 🚀 Funcionalidades
+## Funcionalidades
 
-* 📊 Monitoramento de hábitos alimentares
-* 🥗 Registro de refeições
-* 📈 Acompanhamento de progresso
-* 🎯 Definição de metas nutricionais
-* 🎨 Interface moderna com melhorias contínuas de estética
+* Monitoramento de hábitos alimentares
+* Registro de refeições
+* Acompanhamento de progresso
+* Definição de metas nutricionais
+* Interface moderna com melhorias contínuas de estética
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## Tecnologias Utilizadas
 
 * Flutter
 * Dart
@@ -42,42 +42,42 @@ Este projeto faz parte do desenvolvimento de uma startup, incluindo documentaç�
 
 ---
 
-## 📦 Estrutura do Projeto
+## Estrutura do Projeto
 
 ```id="projstruct"
-📦 nutrirack
- ┣ 📂 android
- ┣ 📂 ios
- ┣ 📂 web
- ┣ 📂 windows
- ┣ 📂 linux
- ┣ 📂 macos
- ┣ 📂 lib
- ┣ 📂 test
- ┣ 📂 assets/images
- ┣ 📜 pubspec.yaml
- ┣ 📜 README.md
- ┗ 📜 documentação (*.pdf)
+ nutrirack
+ ┣  android
+ ┣  ios
+ ┣  web
+ ┣  windows
+ ┣  linux
+ ┣  macos
+ ┣  lib
+ ┣  test
+ ┣  assets/images
+ ┣  pubspec.yaml
+ ┣  README.md
+ ┗  documentação (*.pdf)
 ```
 
 ---
 
-## 📄 Documentação
+##  Documentação
 
 O projeto conta com diversos documentos importantes para entendimento do produto e da startup:
 
-* 📘 Definição do Problema
-* 📊 Backlog do Produto
-* 🚀 MVP – Produto Mínimo Viável
-* 🧠 Personas
-* 📈 Relatório Final
-* 🎤 Pitch do Produto
-* 📋 Projeto Charter
-* 👥 Equipe e definições
+*  Definição do Problema
+*  Backlog do Produto
+*  MVP – Produto Mínimo Viável
+*  Personas
+*  Relatório Final
+*  Pitch do Produto
+*  Projeto Charter
+*  Equipe e definições
 
 ---
 
-## ▶️ Como Executar o Projeto
+##  Como Executar o Projeto
 
 ### Pré-requisitos
 
@@ -103,16 +103,16 @@ flutter run
 
 ---
 
-## 🔄 Histórico de Atualizações
+##  Histórico de Atualizações
 
-* ✨ Melhorias na estética do produto
-* ⚙️ Ajustes em pequenas funcionalidades
-* 🗄️ Criação da estrutura de banco de dados
-* 🚀 Inicialização das plataformas (web, mobile e desktop)
+*  Melhorias na estética do produto
+*  Ajustes em pequenas funcionalidades
+*  Criação da estrutura de banco de dados
+*  Inicialização das plataformas (web, mobile e desktop)
 
 ---
 
-## 🤝 Contribuição
+##  Contribuição
 
 Contribuições são bem-vindas!
 
@@ -124,13 +124,13 @@ Contribuições são bem-vindas!
 
 ---
 
-## 📌 Status do Projeto
+##  Status do Projeto
 
-🚧 Em desenvolvimento (MVP em evolução)
+ Em desenvolvimento (MVP em evolução)
 
 ---
 
-## 📄 Licença
+##  Licença
 
 Este projeto ainda não possui uma licença definida.
 
