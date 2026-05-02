@@ -130,19 +130,6 @@ Contribuições são bem-vindas!
 
 ---
 
-##  Licença
-
-Este projeto ainda não possui uma licença definida.
-
----
-
-## 📞 Contato
-
-Equipe NutriTrack
-(Adicione aqui os contatos dos membros ou da startup)
-
-# calculadora_imc
-
 A new Flutter application.
 
 ## Getting Started
