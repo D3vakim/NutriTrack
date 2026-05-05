@@ -141,7 +141,7 @@ Alguns recursos para você começar, caso este seja seu primeiro projeto Flutter
 - [Laboratório: Crie seu primeiro aplicativo Flutter](https://flutter.dev/docs/get-started/codelab)
 - [Livro de receitas: Exemplos úteis de Flutter](https://flutter.dev/docs/cookbook)
 
-For help getting started with Flutter, - [Livro de receitas: Exemplos úteis de Flutter]view our 
-[online documentation](https://flutter.dev/docs), which offers tutorials, 
+Para obter ajuda para começar a usar o Flutter, - [Livro de receitas: Exemplos úteis de Flutter]veja nosso 
+[documentação on-line](https://flutter.dev/docs), which offers tutorials, 
 samples, guidance on mobile development, and a full API reference.
 
