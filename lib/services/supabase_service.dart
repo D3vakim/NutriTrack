@@ -158,4 +158,19 @@ class SupabaseService {
     await _safeSync('dieta_do_usuario', dietData);
     await _safeSync('training_history', trainingHistory);
   }
+
+  /// Busca a dieta sugerida configurada no banco de dados.
+  Future<Map<String, dynamic>?> fetchSuggestedDiet() async {
+    try {
+      final response = await _supabase
+          .from('suggested_diet')
+          .select('data')
+          .eq('id', 1)
+          .single();
+      return response['data'] as Map<String, dynamic>;
+    } catch (e) {
+      debugPrint('Erro ao buscar dieta sugerida: $e');
+      return null;
+    }
+  }
 }
