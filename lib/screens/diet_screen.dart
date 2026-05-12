@@ -31,10 +31,11 @@ class _DietScreenState extends State<DietScreen> {
       _supper = List<String>.from(data['supper'] ?? []);
       _dinner = List<String>.from(data['dinner'] ?? []);
 
-      // Carrega o Map de substituições com segurança
       final subData = data['substitutions'];
       if (subData is Map) {
-        _substitutions = subData.map((key, value) => MapEntry(key.toString(), List<String>.from(value ?? [])));
+        _substitutions = subData.map(
+          (key, value) => MapEntry(key.toString(), List<String>.from(value ?? [])),
+        );
       } else {
         _substitutions = {};
       }
@@ -53,14 +54,17 @@ class _DietScreenState extends State<DietScreen> {
   }
 
   void _applySuggestedDiet() {
-    final outerContext = context; // ✅ salva o context do widget antes do dialog
+    final outerContext = context;
 
     showDialog(
       context: outerContext,
-      builder: (dialogContext) { // ✅ renomeia para não sobrescrever o outer
+      builder: (dialogContext) {
         return AlertDialog(
           title: const Text("Aplicar Dieta Sugerida"),
-          content: const Text("Tem certeza que deseja substituir toda a sua dieta atual pela dieta sugerida?"),
+          content: const Text(
+            "Os itens sugeridos serão adicionados à sua dieta atual. "
+            "Seus itens personalizados serão mantidos.",
+          ),
           actions: [
             OutlinedButton(
               onPressed: () => Navigator.pop(dialogContext),
@@ -68,25 +72,23 @@ class _DietScreenState extends State<DietScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
-                Navigator.pop(dialogContext); // ✅ fecha só o dialog de confirmação
+                Navigator.pop(dialogContext);
 
-                // Mostra loading usando o outerContext
                 showDialog(
                   context: outerContext,
                   barrierDismissible: false,
                   builder: (_) => const Center(child: CircularProgressIndicator()),
                 );
 
-                final data = await _supabaseService.fetchSuggestedDiet();
+                final suggested = await _supabaseService.fetchSuggestedDiet();
 
-                // Fecha o loading
                 if (mounted) Navigator.of(outerContext).pop();
 
-                if (data == null) {
+                if (suggested == null) {
                   if (mounted) {
                     ScaffoldMessenger.of(outerContext).showSnackBar(
                       const SnackBar(
-                        content: Text('Erro ao buscar dieta sugerida. Tente novamente.'),
+                        content: Text('Erro ao buscar dieta sugerida.'),
                         backgroundColor: Colors.red,
                       ),
                     );
@@ -94,28 +96,67 @@ class _DietScreenState extends State<DietScreen> {
                   return;
                 }
 
-                setState(() {
-                  _breakfast = List<String>.from(data['breakfast'] ?? []);
-                  _lunch    = List<String>.from(data['lunch'] ?? []);
-                  _supper   = List<String>.from(data['supper'] ?? []);
-                  _dinner   = List<String>.from(data['dinner'] ?? []);
+                final last = _supabaseService.lastSuggestedDiet;
 
-                  final subData = data['substitutions'];
-                  if (subData is Map) {
-                    _substitutions = subData.map(
-                          (key, value) => MapEntry(key.toString(), List<String>.from(value ?? [])),
-                    );
-                  } else {
-                    _substitutions = {};
+                List<String> mergeMeal(
+                  List<String> current,
+                  List<dynamic>? lastSug,
+                  List<dynamic>? newSug,
+                ) {
+                  final lastSugSet = Set<String>.from(lastSug ?? []);
+                  final newSugList = List<String>.from(newSug ?? []);
+
+                  final personal = current
+                      .where((item) => !lastSugSet.contains(item))
+                      .toList();
+
+                  for (final item in newSugList) {
+                    if (!personal.contains(item)) {
+                      personal.add(item);
+                    }
+                  }
+                  return personal;
+                }
+
+                setState(() {
+                  _breakfast = mergeMeal(
+                    _breakfast,
+                    last['breakfast'] as List?,
+                    suggested['breakfast'] as List?,
+                  );
+                  _lunch = mergeMeal(
+                    _lunch,
+                    last['lunch'] as List?,
+                    suggested['lunch'] as List?,
+                  );
+                  _supper = mergeMeal(
+                    _supper,
+                    last['supper'] as List?,
+                    suggested['supper'] as List?,
+                  );
+                  _dinner = mergeMeal(
+                    _dinner,
+                    last['dinner'] as List?,
+                    suggested['dinner'] as List?,
+                  );
+
+                  final lastSubs = (last['substitutions'] as Map?) ?? {};
+                  final newSubs = (suggested['substitutions'] as Map?) ?? {};
+
+                  _substitutions.removeWhere((key, _) => lastSubs.containsKey(key));
+
+                  for (final entry in newSubs.entries) {
+                    _substitutions[entry.key] = List<String>.from(entry.value ?? []);
                   }
                 });
 
                 await _saveDietData();
+                await _supabaseService.saveLastSuggestedDiet(suggested);
 
                 if (mounted) {
                   ScaffoldMessenger.of(outerContext).showSnackBar(
                     const SnackBar(
-                      content: Text('Dieta aplicada com sucesso!'),
+                      content: Text('Dieta sugerida aplicada com sucesso!'),
                       backgroundColor: Colors.green,
                     ),
                   );
@@ -128,6 +169,7 @@ class _DietScreenState extends State<DietScreen> {
       },
     );
   }
+
   void _showItemDialog(String title, dynamic list, {int? index, String? groupKey}) {
     TextEditingController controller = TextEditingController();
     if (list is List<String>) {
@@ -142,7 +184,7 @@ class _DietScreenState extends State<DietScreen> {
           content: TextField(
             controller: controller,
             textCapitalization: TextCapitalization.sentences,
-            maxLines: null, // Permite múltiplas linhas na edição
+            maxLines: null,
             keyboardType: TextInputType.multiline,
             decoration: const InputDecoration(hintText: "Digite o alimento e detalhes..."),
           ),
@@ -153,7 +195,6 @@ class _DietScreenState extends State<DietScreen> {
                 if (controller.text.trim().isNotEmpty) {
                   setState(() {
                     if (groupKey != null) {
-                      // Lógica para Map (Substituições)
                       if (index != null) {
                         _substitutions[groupKey]![index] = controller.text.trim();
                       } else {
@@ -163,7 +204,6 @@ class _DietScreenState extends State<DietScreen> {
                         _substitutions[groupKey]!.add(controller.text.trim());
                       }
                     } else if (list is List<String>) {
-                      // Lógica para Listas (Refeições)
                       if (index != null) {
                         list[index] = controller.text.trim();
                       } else {
@@ -336,6 +376,15 @@ class _DietScreenState extends State<DietScreen> {
   }
 
   Widget _buildSubstitutionsSection() {
+    // 1. Lógica para ordenar os grupos numericamente (Ex: Grupo 2 vem antes do Grupo 10)
+    List<String> sortedGroupKeys = _substitutions.keys.toList();
+    sortedGroupKeys.sort((a, b) {
+      final regex = RegExp(r'\d+');
+      int numA = int.tryParse(regex.firstMatch(a)?.group(0) ?? '0') ?? 0;
+      int numB = int.tryParse(regex.firstMatch(b)?.group(0) ?? '0') ?? 0;
+      return numA.compareTo(numB);
+    });
+
     return Card(
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 12),
@@ -357,82 +406,132 @@ class _DietScreenState extends State<DietScreen> {
             ),
             child: const Icon(Icons.swap_horiz_rounded, color: Color(0xFF8E24AA), size: 20),
           ),
-          title: Text(
+          title: const Text(
             "Grupos de Substituição",
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.grey[800]),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF424242)),
           ),
           subtitle: Text(
-            "${_substitutions.length} grupos",
-            style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+            "${_substitutions.keys.length} grupos organizados",
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
           ),
           iconColor: const Color(0xFF8E24AA),
           collapsedIconColor: const Color(0xFF8E24AA),
-          children: _substitutions.entries.map((entry) {
-            return ExpansionTile(
-              tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-              title: Text(entry.key, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-              subtitle: Text("${entry.value.length} itens", style: TextStyle(fontSize: 11, color: Colors.grey[500])),
-              children: entry.value.asMap().entries.map((itemEntry) {
-                int itemIndex = itemEntry.key;
-                String itemText = itemEntry.value;
-                return Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(top: 6),
-                            child: Container(
-                              width: 6,
-                              height: 6,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF8E24AA),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(itemText, style: TextStyle(fontSize: 13, color: Colors.grey[700], height: 1.4)),
-                          ),
-                          const SizedBox(width: 8),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
+          // 2. Mapeando os grupos ORDENADOS
+          children: sortedGroupKeys.map((groupKey) {
+            List<String> items = _substitutions[groupKey]!;
+
+            // 3. Sub-lista Expansível para cada Grupo individual
+            return Theme(
+              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                tilePadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+                title: Text(
+                  groupKey,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+                subtitle: Text(
+                  "${items.length} opções",
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+                children: [
+                  ...items.asMap().entries.map((itemEntry) {
+                    int itemIndex = itemEntry.key;
+                    String itemText = itemEntry.value;
+                    return Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 32, right: 16, top: 8, bottom: 8),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit, color: Colors.blue),
-                                iconSize: 16,
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                onPressed: () => _showItemDialog(entry.key, entry.value, index: itemIndex, groupKey: entry.key),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 6),
+                                child: Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF8E24AA),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
                               ),
                               const SizedBox(width: 12),
-                              IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                iconSize: 16,
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                onPressed: () => _deleteItem(entry.value, itemIndex, groupKey: entry.key),
+                              Expanded(
+                                child: Text(itemText, style: TextStyle(fontSize: 13, color: Colors.grey[700], height: 1.4)),
+                              ),
+                              const SizedBox(width: 8),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit, color: Colors.blue),
+                                    iconSize: 16,
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    onPressed: () => _showItemDialog(groupKey, items, index: itemIndex, groupKey: groupKey),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete, color: Colors.red),
+                                    iconSize: 16,
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    onPressed: () => _deleteItem(items, itemIndex, groupKey: groupKey),
+                                  ),
+                                ],
                               ),
                             ],
+                          ),
+                        ),
+                        if (itemIndex != items.length - 1)
+                          const Divider(height: 1, indent: 48, endIndent: 24, color: Color(0xFFF5F5F5)),
+                      ],
+                    );
+                  }).toList(),
+                  // Botão de Adicionar item exclusivo para aquele grupo específico
+                  InkWell(
+                    onTap: () => _showItemDialog(groupKey, items, groupKey: groupKey),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      margin: const EdgeInsets.only(left: 32, right: 16, bottom: 8, top: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9FBF9),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add,
+                            size: 16,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            "Adicionar novo a este grupo",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    if (itemIndex != entry.value.length - 1)
-                      const Divider(height: 1, indent: 24, endIndent: 24, color: Color(0xFFF5F5F5)),
-                  ],
-                );
-              }).toList(),
+                  ),
+                ],
+              ),
             );
           }).toList(),
         ),
       ),
     );
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
