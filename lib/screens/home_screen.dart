@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
 import '../utils/calculadora_logic.dart';
+import 'splash_screen.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -172,11 +173,24 @@ class _HomeState extends State<Home> {
     final Color resultBgColor = _lastImc != null ? getImcBackgroundColor(_lastImc!) : Colors.white;
 
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("NutriTrack - Calculadora"),
+        title: const Text('Calculadora IMC'),
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _resetFields)
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Sair da Conta',
+            onPressed: () async {
+              await SupabaseService().signOut();
+              if (mounted) {
+                // Ao deslogar, empurra o usuário de volta para o Splash Screen
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => SplashScreen()), // <-- Retiramos o 'const' daqui
+                      (Route<dynamic> route) => false,
+                );
+              }
+            },
+          ),
         ],
       ),
       body: SingleChildScrollView(

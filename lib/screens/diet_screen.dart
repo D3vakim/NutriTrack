@@ -16,6 +16,7 @@ class _DietScreenState extends State<DietScreen> {
   List<String> _supper = [];
   List<String> _dinner = [];
   Map<String, List<String>> _substitutions = {};
+  Map<String, dynamic> _dietLog = {};
 
   @override
   void initState() {
@@ -39,6 +40,7 @@ class _DietScreenState extends State<DietScreen> {
       } else {
         _substitutions = {};
       }
+      _dietLog = Map<String, dynamic>.from(_supabaseService.dietLog);
     });
   }
 
@@ -234,6 +236,238 @@ class _DietScreenState extends State<DietScreen> {
     _saveDietData();
   }
 
+  void _showLogConsumptionDialog({String? initialItemText}) {
+    DateTime selectedDate = DateTime.now();
+    TextEditingController customItemCtrl = TextEditingController(text: initialItemText ?? "");
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            String dateStr = "${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}";
+
+            return AlertDialog(
+              title: Text(initialItemText == null ? "Refeição Livre / Extra" : "Registrar Consumo"),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.calendar_today, color: Colors.green),
+                      title: Text("Data: $dateStr"),
+                      trailing: const Icon(Icons.edit, size: 18),
+                      onTap: () async {
+                        DateTime? picked = await showDatePicker(
+                          context: context,
+                          initialDate: selectedDate,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime.now(),
+                        );
+                        if (picked != null) setStateDialog(() => selectedDate = picked);
+                      },
+                    ),
+                    const Divider(),
+                    TextField(
+                      controller: customItemCtrl,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: const InputDecoration(
+                        labelText: "O que você consumiu?",
+                        hintText: "Ex: Sanduíche, fatia de bolo...",
+                      ),
+                      maxLines: null,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text("Em qual refeição?", style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        _buildMealLogButton(ctx, dateStr, "breakfast", "Café", customItemCtrl),
+                        _buildMealLogButton(ctx, dateStr, "lunch", "Almoço", customItemCtrl),
+                        _buildMealLogButton(ctx, dateStr, "supper", "Lanche", customItemCtrl),
+                        _buildMealLogButton(ctx, dateStr, "dinner", "Jantar", customItemCtrl),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                OutlinedButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancelar")),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildMealLogButton(BuildContext ctx, String dateKey, String mealKey, String mealLabel, TextEditingController ctrl) {
+    return ElevatedButton(
+      onPressed: () async {
+        String itemText = ctrl.text.trim();
+        if (itemText.isEmpty) return;
+
+        setState(() {
+          if (!_dietLog.containsKey(dateKey)) {
+            _dietLog[dateKey] = {"breakfast": [], "lunch": [], "supper": [], "dinner": []};
+          }
+          if (_dietLog[dateKey][mealKey] == null) {
+            _dietLog[dateKey][mealKey] = [];
+          }
+          (_dietLog[dateKey][mealKey] as List).add(itemText);
+        });
+        await _supabaseService.saveDietLog(_dietLog);
+        
+        if (mounted) {
+          Navigator.pop(ctx);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Adicionado ao $mealLabel!'), backgroundColor: Colors.green),
+          );
+        }
+      },
+      style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), minimumSize: Size.zero),
+      child: Text(mealLabel),
+    );
+  }
+
+  void _editLogItem(String dateKey, String mealKey, int index, String currentText) {
+    TextEditingController ctrl = TextEditingController(text: currentText);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Editar Registro"),
+        content: TextField(controller: ctrl, maxLines: null, textCapitalization: TextCapitalization.sentences),
+        actions: [
+          OutlinedButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancelar")),
+          ElevatedButton(
+            onPressed: () {
+              if (ctrl.text.trim().isNotEmpty) {
+                setState(() => (_dietLog[dateKey][mealKey] as List)[index] = ctrl.text.trim());
+                _supabaseService.saveDietLog(_dietLog);
+                Navigator.pop(ctx);
+              }
+            },
+            child: const Text("Salvar"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _deleteLogItem(String dateKey, String mealKey, int index) {
+    setState(() => (_dietLog[dateKey][mealKey] as List).removeAt(index));
+    _supabaseService.saveDietLog(_dietLog);
+  }
+
+  Widget _buildDietLogSection() {
+    List<String> sortedDates = _dietLog.keys.toList();
+    sortedDates.sort((a, b) {
+      List<String> pA = a.split('/');
+      List<String> pB = b.split('/');
+      DateTime dA = DateTime(int.parse(pA[2]), int.parse(pA[1]), int.parse(pA[0]));
+      DateTime dB = DateTime(int.parse(pB[2]), int.parse(pB[1]), int.parse(pB[0]));
+      return dB.compareTo(dA);
+    });
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 4.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text("Diário Alimentar", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32))),
+              IconButton(
+                icon: const Icon(Icons.add_box, color: Colors.green, size: 28),
+                onPressed: () => _showLogConsumptionDialog(), // Sem texto inicial, abre para texto livre
+                tooltip: "Adicionar refeição livre",
+              )
+            ],
+          ),
+        ),
+        if (sortedDates.isEmpty)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 16.0, left: 4.0),
+            child: Text("Nenhum consumo registrado ainda.", style: TextStyle(color: Colors.grey)),
+          ),
+        ...sortedDates.map((dateKey) {
+          Map<String, dynamic> meals = Map<String, dynamic>.from(_dietLog[dateKey]);
+          return Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey.shade300)),
+            margin: const EdgeInsets.only(bottom: 12),
+            child: Theme(
+              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                leading: const Icon(Icons.calendar_month, color: Color(0xFF2E7D32), size: 22),
+                title: Text("Consumo: $dateKey", style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                children: [
+                  _buildMealLogDetails(dateKey, "breakfast", "Café da Manhã", meals['breakfast']),
+                  _buildMealLogDetails(dateKey, "lunch", "Almoço", meals['lunch']),
+                  _buildMealLogDetails(dateKey, "supper", "Lanche", meals['supper']),
+                  _buildMealLogDetails(dateKey, "dinner", "Jantar", meals['dinner']),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ],
+    );
+  }
+
+  Widget _buildMealLogDetails(String dateKey, String mealKey, String mealTitle, dynamic items) {
+    if (items == null || (items as List).isEmpty) return const SizedBox.shrink();
+    List<String> itemList = List<String>.from(items);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(mealTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.black54)),
+          const SizedBox(height: 4),
+          ...itemList.asMap().entries.map((entry) {
+            int index = entry.key;
+            return Padding(
+              padding: const EdgeInsets.only(left: 4.0, bottom: 2.0),
+              child: Row(
+                children: [
+                  const Icon(Icons.check_circle_outline, size: 16, color: Colors.green),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(entry.value, style: const TextStyle(fontSize: 13, height: 1.3))),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.blue, size: 16),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+                        onPressed: () => _editLogItem(dateKey, mealKey, index, entry.value),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red, size: 16),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+                        onPressed: () => _deleteLogItem(dateKey, mealKey, index),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+          const Divider(height: 12),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDietSection(String title, List<String> list, IconData icon, Color bgColor, Color iconColor) {
     return Card(
       elevation: 0,
@@ -308,6 +542,14 @@ class _DietScreenState extends State<DietScreen> {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            IconButton(
+                              icon: const Icon(Icons.add_circle_outline, color: Colors.green),
+                              iconSize: 20,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () => _showLogConsumptionDialog(initialItemText: itemText),
+                            ),
+                            const SizedBox(width: 12),
                             IconButton(
                               icon: const Icon(Icons.edit, color: Colors.blue),
                               iconSize: 18,
@@ -468,6 +710,14 @@ class _DietScreenState extends State<DietScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   IconButton(
+                                    icon: const Icon(Icons.add_circle_outline, color: Colors.green),
+                                    iconSize: 20,
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    onPressed: () => _showLogConsumptionDialog(initialItemText: itemText),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  IconButton(
                                     icon: const Icon(Icons.edit, color: Colors.blue),
                                     iconSize: 16,
                                     padding: EdgeInsets.zero,
@@ -532,10 +782,20 @@ class _DietScreenState extends State<DietScreen> {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Minha Dieta")),
+      appBar: AppBar(
+        title: const Text("Minha Dieta"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_task),
+            tooltip: "Refeição Livre / Extra",
+            onPressed: () => _showLogConsumptionDialog(),
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -545,6 +805,9 @@ class _DietScreenState extends State<DietScreen> {
             _buildDietSection("Lanche", _supper, Icons.emoji_food_beverage_outlined, const Color(0xFFFFEBEE), const Color(0xFFE53935)),
             _buildDietSection("Jantar", _dinner, Icons.dinner_dining_outlined, const Color(0xFFE8EAF6), const Color(0xFF3949AB)),
             _buildSubstitutionsSection(),
+            
+            _buildDietLogSection(),
+
             const SizedBox(height: 16),
             Card(
               elevation: 0,

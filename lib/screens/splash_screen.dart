@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/supabase_service.dart';
 import 'main_scaffold.dart';
+import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -45,22 +47,24 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   }
 
   Future<void> _initAppData() async {
-    try {
-      // Tenta sincronizar os dados, mas não trava em caso de erro
+    // Dá tempo de ver a animação bonita
+    await Future.delayed(const Duration(seconds: 2));
+
+    // Verifica se existe uma sessão de login ativa e salva no celular
+    final session = Supabase.instance.client.auth.currentSession;
+
+    if (session != null) {
+      // Já está logado! Puxa os dados dele e vai pro app
       await SupabaseService().loadAllData();
-    } catch (e) {
-      debugPrint("Erro ao carregar dados na Splash: $e");
+      if (mounted) {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MainScaffold()));
+      }
+    } else {
+      // Não está logado. Vai pra tela de Login
+      if (mounted) {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+      }
     }
-
-    // Tempo mínimo de permanência para apreciar o design
-    await Future.delayed(const Duration(seconds: 3));
-
-    if (!mounted) return;
-    
-    // Navega para o MainScaffold (BottomNavigationBar)
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const MainScaffold()),
-    );
   }
 
   @override
@@ -76,17 +80,24 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       backgroundColor: Colors.white,
       body: Stack(
         children: [
+          // Conteúdo central centralizado
           Center(
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                FadeTransition(
-                  opacity: _logoAnimation,
-                  child: Image.asset(
-                    'assets/images/logo.png',
-                    width: 140,
-                    height: 140,
-                    fit: BoxFit.contain,
+                ScaleTransition(
+                  scale: _logoAnimation,
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE8F5E9),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.health_and_safety,
+                      size: 80,
+                      color: Color(0xFF2E7D32),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -97,8 +108,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                       const Text(
                         "NutriTrack",
                         style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
                           color: Color(0xFF2E7D32),
                         ),
                       ),

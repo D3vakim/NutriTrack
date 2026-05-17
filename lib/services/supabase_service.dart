@@ -10,27 +10,59 @@ class SupabaseService extends ChangeNotifier {
 
   final _supabase = Supabase.instance.client;
 
-  // Cache em memória para o app rodar liso e rápido
   List<dynamic> imcHistory = [];
   Map<String, dynamic> dietData = {};
   List<dynamic> trainingHistory = [];
+  Map<String, dynamic> dietLog = {};
   Map<String, dynamic> lastSuggestedDiet = {};
 
   bool isLoaded = false;
 
-  /// Carrega tudo ao iniciar o app (Splash Screen)
-  Future<void> loadAllData() async {
-    // 1. Carrega o que tem salvo no celular rápido
-    await _loadFromLocal();
-    isLoaded = true;
-    notifyListeners();
+  // ✅ Agora pega o ID real e permanente do usuário logado
+  Future<String> _getDeviceId() async {
+    final user = _supabase.auth.currentUser;
+    if (user != null) {
+      return user.id;
+    }
+    throw Exception('Usuário não autenticado');
+  }
 
-    // 2. Puxa as atualizações do Supabase (Tabela app_data)
+  // --- MÉTODOS DE AUTENTICAÇÃO ---
+  Future<void> signUp(String email, String password) async {
+    await _supabase.auth.signUp(email: email, password: password);
+  }
+
+  Future<void> signIn(String email, String password) async {
+    await _supabase.auth.signInWithPassword(email: email, password: password);
+  }
+
+  Future<void> signOut() async {
+    await _supabase.auth.signOut();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear(); // Limpa o cache local para o próximo usuário
+
+    // Reseta as variáveis da memória
+    imcHistory = [];
+    dietData = {};
+    trainingHistory = [];
+    dietLog = {};
+    isLoaded = false;
+    notifyListeners();
+  }
+
+  // --- CARREGAMENTO DE DADOS ---
+  Future<void> loadAllData() async {
     try {
+      final deviceId = await _getDeviceId(); // Exige que esteja logado
+      await _loadFromLocal();
+      isLoaded = true;
+      notifyListeners();
+
       final response = await _supabase
           .from('app_data')
           .select()
-          .inFilter('id_key', ['imc_history', 'dieta_do_usuario', 'training_history']);
+          .eq('device_id', deviceId)
+          .inFilter('id_key', ['imc_history', 'dieta_do_usuario', 'training_history', 'diet_log']);
 
       bool changed = false;
 
@@ -50,19 +82,21 @@ class SupabaseService extends ChangeNotifier {
           trainingHistory = List.from(cloudData);
           await _saveToLocal('training_history', trainingHistory);
           changed = true;
+        } else if (key == 'diet_log' && cloudData != null) {
+          dietLog = Map<String, dynamic>.from(cloudData);
+          await _saveToLocal('diet_log', dietLog);
+          changed = true;
         }
       }
 
-      if (changed) {
-        notifyListeners();
-      }
-      debugPrint('✅ Dados de uso carregados da nuvem!');
+      if (changed) notifyListeners();
+      debugPrint('✅ Dados do usuário carregados da nuvem!');
     } catch (e) {
-      debugPrint('⚠️ Trabalhando Offline (Erro ao buscar da nuvem): $e');
+      debugPrint('⚠️ Erro ao buscar da nuvem: $e');
     }
   }
 
-  // --- PERSISTÊNCIA LOCAL ---
+  // --- PERSISTÊNCIA LOCAL E NUVEM (Mantido igual) ---
   Future<void> _saveToLocal(String key, dynamic data) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('local_$key', jsonEncode(data));
@@ -70,21 +104,18 @@ class SupabaseService extends ChangeNotifier {
 
   Future<void> _loadFromLocal() async {
     final prefs = await SharedPreferences.getInstance();
-
     final imcRaw = prefs.getString('local_imc_history');
     if (imcRaw != null) imcHistory = jsonDecode(imcRaw);
-
     final dietRaw = prefs.getString('local_dieta_do_usuario');
     if (dietRaw != null) dietData = jsonDecode(dietRaw);
-
     final trainingRaw = prefs.getString('local_training_history');
     if (trainingRaw != null) trainingHistory = jsonDecode(trainingRaw);
-
+    final logRaw = prefs.getString('local_diet_log');
+    if (logRaw != null) dietLog = jsonDecode(logRaw);
     final lastSugRaw = prefs.getString('local_last_suggested_diet');
     if (lastSugRaw != null) lastSuggestedDiet = jsonDecode(lastSugRaw);
   }
 
-  // --- MÉTODOS DE SALVAR (Que as telas chamam) ---
   Future<void> saveIMC(List<dynamic> newHistory) async {
     imcHistory = newHistory;
     await _saveToLocal('imc_history', imcHistory);
@@ -106,58 +137,46 @@ class SupabaseService extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> saveDietLog(Map<String, dynamic> newLog) async {
+    dietLog = newLog;
+    await _saveToLocal('diet_log', dietLog);
+    await _safeSync('diet_log', dietLog);
+    notifyListeners();
+  }
+
   Future<void> saveLastSuggestedDiet(Map<String, dynamic> diet) async {
     lastSuggestedDiet = diet;
     await _saveToLocal('last_suggested_diet', diet);
   }
 
-  /// ✅ Sincroniza com o Supabase EXATAMENTE no formato da sua tabela 'app_data'
-  /// ✅ Sincroniza com a nuvem e ignora o erro de múltiplas linhas duplicadas (Erro 406)
   Future<void> _safeSync(String key, dynamic data) async {
     try {
-      // 1. Busca como uma lista, pegando no máximo 1 (assim ele nunca dá o erro 406)
+      final deviceId = await _getDeviceId();
+
       final existing = await _supabase
           .from('app_data')
           .select('id_key')
           .eq('id_key', key)
+          .eq('device_id', deviceId)
           .limit(1);
 
-      // 'existing' agora é uma lista. Se não for vazia, significa que a chave existe.
       if (existing.isNotEmpty) {
-        // 2. Atualiza TODAS as linhas que tenham essa chave (mesmo que tenham 9 cópias perdidas)
-        await _supabase
-            .from('app_data')
-            .update({'data': data})
-            .eq('id_key', key);
+        await _supabase.from('app_data').update({'data': data}).eq('id_key', key).eq('device_id', deviceId);
       } else {
-        // 3. Se não tem nenhuma, insere a primeira
-        await _supabase
-            .from('app_data')
-            .insert({'id_key': key, 'data': data});
+        await _supabase.from('app_data').insert({'device_id': deviceId, 'id_key': key, 'data': data});
       }
-
       debugPrint('✅ Sincronizado com a nuvem: $key');
     } catch (e) {
       debugPrint('❌ Falha ao sincronizar $key: $e');
     }
-  }  /// ✅ Busca a dieta sugerida da SUA TABELA NOVA 'suggested_diet'
+  }
+
   Future<Map<String, dynamic>?> fetchSuggestedDiet() async {
     try {
-      final response = await _supabase
-          .from('suggested_diet')
-          .select('data')
-          .eq('id', 1) // Busca exatamente a linha que você mostrou na foto
-          .maybeSingle();
-
-      if (response != null && response['data'] != null) {
-        debugPrint('✅ Dieta sugerida puxada do banco!');
-        return response['data'] as Map<String, dynamic>;
-      } else {
-        debugPrint('⚠️ Nenhuma dieta encontrada no banco.');
-        return null;
-      }
+      final response = await _supabase.from('suggested_diet').select('data').eq('id', 1).maybeSingle();
+      if (response != null && response['data'] != null) return response['data'] as Map<String, dynamic>;
+      return null;
     } catch (e) {
-      debugPrint('❌ Erro ao buscar dieta sugerida: $e');
       return null;
     }
   }

@@ -21,6 +21,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
     DateTime now = DateTime.now();
     _selectedMonthYear = '${now.month.toString().padLeft(2, '0')}/${now.year}';
     _loadLocalHistory();
+
+    // Fica "ouvindo" se a Home (ou outra tela) salvou um IMC novo
+    _supabaseService.addListener(_onDataChanged);
+  }
+
+  @override
+  void dispose() {
+    _supabaseService.removeListener(_onDataChanged);
+    super.dispose();
+  }
+
+  // Atualiza a tela instantaneamente se houver mudança no SupabaseService
+  void _onDataChanged() {
+    if (mounted) {
+      setState(() {
+        _history = List.from(_supabaseService.imcHistory);
+        _sortHistory();
+      });
+    }
   }
 
   void _loadLocalHistory() {
@@ -34,7 +53,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     _history.sort((a, b) {
       List<String> partsA = a['date'].toString().split('/');
       List<String> partsB = b['date'].toString().split('/');
-      DateTime dA = DateTime(int.parse(partsA[2]), int.parse(partsB[1]), int.parse(partsA[0]));
+      DateTime dA = DateTime(int.parse(partsA[2]), int.parse(partsA[1]), int.parse(partsA[0]));
       DateTime dB = DateTime(int.parse(partsB[2]), int.parse(partsB[1]), int.parse(partsB[0]));
       return dB.compareTo(dA);
     });
@@ -52,27 +71,54 @@ class _HistoryScreenState extends State<HistoryScreen> {
     int existingIndex = _history.indexWhere((h) => h['date'].toString() == date);
     double imc = weight / ((height / 100) * (height / 100));
 
-    setState(() {
-      if (existingIndex != -1) {
-        _history[existingIndex] = {
-          'date': date, 
-          'weight': weight, 
-          'height': height, 
-          'imc': imc,
-          'timestamp': DateTime.now().millisecondsSinceEpoch,
-        };
-      } else {
+    if (existingIndex != -1) {
+      // Mensagem de segurança restaurada
+      showDialog(
+        context: context,
+        builder: (ctx) {
+          return AlertDialog(
+            title: const Text("Atenção"),
+            content: Text("Você já tem um registro de peso para o dia $date. Deseja substituir pelo novo registro?"),
+            actions: [
+              OutlinedButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text("Cancelar"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _history[existingIndex] = {
+                      'date': date,
+                      'weight': weight,
+                      'height': height,
+                      'imc': imc,
+                      'timestamp': DateTime.now().millisecondsSinceEpoch,
+                    };
+                    _sortHistory();
+                  });
+                  _saveHistory();
+                  Navigator.pop(ctx);
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                child: const Text("Substituir", style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      setState(() {
         _history.add({
-          'date': date, 
-          'weight': weight, 
-          'height': height, 
+          'date': date,
+          'weight': weight,
+          'height': height,
           'imc': imc,
           'timestamp': DateTime.now().millisecondsSinceEpoch,
         });
-      }
-      _sortHistory();
-    });
-    _saveHistory();
+        _sortHistory();
+      });
+      _saveHistory();
+    }
   }
 
   void _deleteEntry(int indexInFullList) {
@@ -111,7 +157,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   void _showWeightHeightDialog(String dateStr, {double? initialWeight, double? initialHeight}) {
     TextEditingController weightCtrl = TextEditingController(text: initialWeight?.toString() ?? "");
     TextEditingController heightCtrl = TextEditingController(
-      text: initialHeight?.toString() ?? (_history.isNotEmpty ? _history.first['height'].toString() : '175')
+        text: initialHeight?.toString() ?? (_history.isNotEmpty ? _history.first['height'].toString() : '175')
     );
 
     showDialog(
@@ -123,21 +169,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: weightCtrl, 
-                keyboardType: TextInputType.number, 
-                decoration: const InputDecoration(labelText: "Peso (kg)", hintText: "Ex: 80.5")
+                  controller: weightCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: "Peso (kg)", hintText: "Ex: 80.5")
               ),
               TextField(
-                controller: heightCtrl, 
-                keyboardType: TextInputType.number, 
-                decoration: const InputDecoration(labelText: "Altura (cm)", hintText: "Ex: 175")
+                  controller: heightCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: "Altura (cm)", hintText: "Ex: 175")
               ),
             ],
           ),
           actions: [
             OutlinedButton(
-              onPressed: () => Navigator.pop(context), 
-              child: const Text("Cancelar")
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancelar")
             ),
             ElevatedButton(
               onPressed: () {
@@ -161,14 +207,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
     Set<String> months = {};
     DateTime now = DateTime.now();
     months.add('${now.month.toString().padLeft(2, '0')}/${now.year}');
-    
+
     for (var item in _history) {
       List<String> parts = item['date'].split('/');
       if (parts.length == 3) {
         months.add('${parts[1]}/${parts[2]}');
       }
     }
-    
+
     List<String> sorted = months.toList();
     sorted.sort((a, b) {
       int valA = int.parse(a.split('/')[1]) * 100 + int.parse(a.split('/')[0]);
@@ -200,9 +246,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
     int currentM = int.parse(_selectedMonthYear.split('/')[0]);
     int currentY = int.parse(_selectedMonthYear.split('/')[1]);
     int daysInMonth = DateUtils.getDaysInMonth(currentY, currentM);
-    
+
     List<FlSpot> spots = _getChartSpots(currentM, currentY, daysInMonth);
-    
+
     List<dynamic> filteredHistory = _history.where((item) {
       List<String> parts = item['date'].split('/');
       return parts.length == 3 && parts[1] == currentM.toString().padLeft(2, '0') && parts[2] == currentY.toString();
@@ -223,16 +269,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white, 
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade100, width: 1),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.shade100,
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                )
-              ]
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade100, width: 1),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.shade100,
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  )
+                ]
             ),
             child: Column(
               children: [
@@ -240,20 +286,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "Evolução de Peso (kg)", 
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold, 
-                        color: Theme.of(context).colorScheme.primary
-                      )
+                        "Evolução de Peso (kg)",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.primary
+                        )
                     ),
                     DropdownButton<String>(
                       value: _selectedMonthYear,
                       underline: const SizedBox(),
                       icon: const Icon(Icons.calendar_month),
                       style: TextStyle(
-                        fontSize: 13, 
-                        color: Theme.of(context).colorScheme.primary, 
-                        fontWeight: FontWeight.w500
+                          fontSize: 13,
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w500
                       ),
                       dropdownColor: Colors.white,
                       items: availableMonths.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
@@ -271,25 +317,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     maxX: daysInMonth.toDouble(),
                     lineBarsData: [
                       LineChartBarData(
-                        spots: spots, 
-                        isCurved: true, 
-                        color: Colors.green, 
-                        barWidth: 3,
-                        dotData: const FlDotData(show: true),
-                        belowBarData: BarAreaData(show: true, color: Colors.green.withOpacity(0.1))
+                          spots: spots,
+                          isCurved: true,
+                          color: Colors.green,
+                          barWidth: 3,
+                          dotData: const FlDotData(show: true),
+                          belowBarData: BarAreaData(show: true, color: Colors.green.withOpacity(0.1))
                       )
                     ],
                     titlesData: FlTitlesData(
                       rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                       topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                       bottomTitles: AxisTitles(sideTitles: SideTitles(
-                        showTitles: true,
-                        getTitlesWidget: (val, meta) {
-                          if (val % 5 == 0 || val == 1 || val == daysInMonth) {
-                            return Text(val.toInt().toString(), style: const TextStyle(fontSize: 10));
+                          showTitles: true,
+                          getTitlesWidget: (val, meta) {
+                            if (val % 5 == 0 || val == 1 || val == daysInMonth) {
+                              return Text(val.toInt().toString(), style: const TextStyle(fontSize: 10));
+                            }
+                            return const SizedBox();
                           }
-                          return const SizedBox();
-                        }
                       )),
                     ),
                     gridData: const FlGridData(show: true, drawVerticalLine: false),
@@ -299,7 +345,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ],
             ),
           ),
-          
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: ElevatedButton.icon(
@@ -311,134 +357,134 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   lastDate: DateTime.now(),
                 );
                 if (pickedDate != null) _showWeightHeightDialog(_formatDate(pickedDate));
-              }, 
-              icon: const Icon(Icons.add), 
+              },
+              icon: const Icon(Icons.add),
               label: const Text("Novo Registro Manual"),
               style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 45)),
             ),
           ),
-          
+
           const SizedBox(height: 10),
           const Divider(),
-          
+
           Expanded(
-            child: filteredHistory.isEmpty 
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.show_chart, size: 64, color: Colors.grey[300]),
-                      const SizedBox(height: 12),
-                      Text(
-                        "Nenhum registro neste mês",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey[500],
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        "Calcule seu IMC e salve para acompanhar sua evolução",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey[400],
-                        ),
-                      ),
-                    ],
+            child: filteredHistory.isEmpty
+                ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.show_chart, size: 64, color: Colors.grey[300]),
+                  const SizedBox(height: 12),
+                  Text(
+                    "Nenhum registro neste mês",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey[500],
+                    ),
                   ),
-                )
-              : ListView.builder(
-                  itemCount: filteredHistory.length,
-                  itemBuilder: (context, index) {
-                    final item = filteredHistory[index];
-                    int originalIndex = _history.indexOf(item);
-                    final double imcValue = (item['imc'] as num).toDouble();
-                    final String status = calcularImc(item['weight'], item['height'] / 100).split(' (')[0];
-                    
-                    return Card(
-                      elevation: 0,
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(color: Colors.grey.shade200, width: 1),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: getImcBackgroundColor(imcValue),
-                                borderRadius: BorderRadius.circular(10),
+                  const SizedBox(height: 6),
+                  Text(
+                    "Calcule seu IMC e salve para acompanhar sua evolução",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                ],
+              ),
+            )
+                : ListView.builder(
+              itemCount: filteredHistory.length,
+              itemBuilder: (context, index) {
+                final item = filteredHistory[index];
+                int originalIndex = _history.indexOf(item);
+                final double imcValue = (item['imc'] as num).toDouble();
+                final String status = calcularImc(item['weight'], item['height'] / 100).split(' (')[0];
+
+                return Card(
+                  elevation: 0,
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: Colors.grey.shade200, width: 1),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: getImcBackgroundColor(imcValue),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            imcValue.toStringAsFixed(1),
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: getImcColor(imcValue),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item['date'],
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                imcValue.toStringAsFixed(1),
+                              Text(
+                                "${item['weight']} kg · ${item['height']} cm",
                                 style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              Text(
+                                status,
+                                style: TextStyle(
+                                  fontSize: 11,
                                   color: getImcColor(imcValue),
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item['date'],
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  Text(
-                                    "${item['weight']} kg · ${item['height']} cm",
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                  Text(
-                                    status,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: getImcColor(imcValue),
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
+                            ],
+                          ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
+                              onPressed: () => _showWeightHeightDialog(
+                                item['date'],
+                                initialWeight: (item['weight'] as num).toDouble(),
+                                initialHeight: (item['height'] as num).toDouble(),
                               ),
                             ),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
-                                  onPressed: () => _showWeightHeightDialog(
-                                    item['date'], 
-                                    initialWeight: (item['weight'] as num).toDouble(),
-                                    initialHeight: (item['height'] as num).toDouble(),
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                                  onPressed: () => _confirmDelete(originalIndex),
-                                ),
-                              ],
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                              onPressed: () => _confirmDelete(originalIndex),
                             ),
                           ],
                         ),
-                      ),
-                    );
-                  },
-                ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
