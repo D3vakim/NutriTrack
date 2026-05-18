@@ -17,11 +17,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-// cometário sourceCompatibility = JavaVersion.VERSION_17
-targetCompatibility = JavaVersion.VERSION_17
+// cometário  Java 17 correto, versão recomendada hoje
 
-
-    kotlinOptions {
+ kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
