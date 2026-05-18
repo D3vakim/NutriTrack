@@ -50,6 +50,9 @@ https://developer.android.com/studio/build/application-id.html
     }
 }
 
+//cometário, Só para teste! Antes de publicar, configure chave oficial de assinatura
+
+
 flutter {
     source = "../.."
 }
