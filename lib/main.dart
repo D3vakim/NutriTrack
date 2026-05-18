@@ -38,6 +38,9 @@ Sugestão: mover essa cor para uma classe separada de constantes (ex: app_colors
           seedColor: primaryColor,
           primary: primaryColor,
         ),
+        //cometário, Uso correto do ColorScheme do Material3, gera paleta automática
+Observação: como já definiu a cor primária, está certo, mas poderia usar apenas o seedColor que ele já define tudo
+        
         
         appBarTheme: AppBarTheme(
           centerTitle: true,
