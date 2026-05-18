@@ -40,6 +40,8 @@ Sugestão: mover essa cor para uma classe separada de constantes (ex: app_colors
         ),
         //cometário, Uso correto do ColorScheme do Material3, gera paleta automática
 Observação: como já definiu a cor primária, está certo, mas poderia usar apenas o seedColor que ele já define tudo
+        //cometário, Ajusta o tamanho dos componentes conforme o sistema (Android/iOS) — deixa o app mais nativo
+        
         
         
         appBarTheme: AppBarTheme(
