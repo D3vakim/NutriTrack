@@ -63,3 +63,8 @@ flutter {
 }
 
 //cometário, Caminho correto, não mudar
+//cometário resumo. ### Resumo
+ Tudo segue padrão oficial Flutter/Android
+ Ajustar antes de publicar: `applicationId`, `namespace` e assinatura
+ Melhorias: adicionar redução de código e definir `minSdk` se precisar
+
