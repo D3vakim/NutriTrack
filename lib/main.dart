@@ -56,6 +56,8 @@ Observação: como já definiu a cor primária, está certo, mas poderia usar ap
           ),
         ),
 
+        // cometário, Configuração padronizada da AppBar em todo o app Sugestão: adicionar iconTheme para definir cor dos ícones também, garante consistência
+        
         inputDecorationTheme: InputDecorationTheme(
           border: const OutlineInputBorder(),
           focusedBorder: OutlineInputBorder(
