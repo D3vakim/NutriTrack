@@ -110,4 +110,19 @@ Cuidado: isso pode dificultar acessibilidade para pessoas que precisam de texto 
 }
 //comentário  Tela inicial definida corretamente
 Sugestão: adicionar carregamento ou verificação de sessão do Supabase na SplashScreen, para já direcionar o usuário logado direto para a tela principal
+  // cometário ### Resumo geral
+
+ Pontos positivos:
+- Estrutura limpa e organizada
+- Tema todo padronizado (cores, botões, campos, barras)
+- Usa Material3 e boas práticas de inicialização
+
+ Pontos que precisam ser corrigidos:
+- [ ] Mover URL e chave do Supabase para variáveis de ambiente (segurança essencial!)
+
+ Melhorias recomendadas:
+- Separar cores e temas em arquivos próprios (organização)
+- Completar estilos para todos os tipos de botões
+- Adicionar tratamento de acessibilidade no tamanho do texto
+- Implementar verificação de sessão na tela de abertura
   
