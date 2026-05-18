@@ -101,6 +101,9 @@ Sugestão: adicionar cor de sombra ou elevação leve se quiser dar destaque em 
         ),
         child: child!,
       ),
+  // cometário Define tamanho de texto fixo, evita que o app quebre se o usuário mudar configuração do celular
+Cuidado: isso pode dificultar acessibilidade para pessoas que precisam de texto maior. Avalie se realmente precisa deixar fixo
+  
       home: const SplashScreen(),
     );
   }
