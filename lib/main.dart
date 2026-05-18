@@ -24,6 +24,9 @@ class NutriTrackApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color primaryColor = const Color(0xFF2E7D32);
+    //cometário, Cor primária definida uma vez e reutilizada — boa prática
+Sugestão: mover essa cor para uma classe separada de constantes (ex: app_colors.dart) para organizar melhor, pois poderá ser usada em várias telas
+  
 
     return MaterialApp(
       title: 'NutriTrack',
