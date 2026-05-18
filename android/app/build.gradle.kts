@@ -22,6 +22,8 @@ android {
  kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
+// cometário, Alinhado com Java 17, sem conflitos
+
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
