@@ -37,6 +37,8 @@ android {
     }
 // cometário OBRIGATÓRIO ALTERAR! É o ID único da loja. Troque para algo seu, ex: `com.seunome.calculadoraimc`
 https://developer.android.com/studio/build/application-id.html
+// comentário, Padrão funciona bem. Dica: se quiser suportar celulares antigos, use `minSdk = 21`
+
 
 
     buildTypes {
