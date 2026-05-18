@@ -108,3 +108,6 @@ Cuidado: isso pode dificultar acessibilidade para pessoas que precisam de texto 
     );
   }
 }
+//comentário  Tela inicial definida corretamente
+Sugestão: adicionar carregamento ou verificação de sessão do Supabase na SplashScreen, para já direcionar o usuário logado direto para a tela principal
+  
