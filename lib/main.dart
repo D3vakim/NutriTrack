@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/splash_screen.dart';
+// cometário,  PONTO CRÍTICO DE SEGURANÇA!
+As chaves e URL do Supabase estão diretamente no código.
+Nunca deixe valores sensíveis assim — use variáveis de ambiente ou arquivo .env (ex: pacote flutter_dotenv).
+Isso evita que dados de acesso vazem se o código for compartilhado ou público.
+  
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
