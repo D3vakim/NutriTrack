@@ -61,3 +61,5 @@ minifyEnabled = true
 flutter {
     source = "../.."
 }
+
+//cometário, Caminho correto, não mudar
