@@ -67,6 +67,10 @@ Observação: como já definiu a cor primária, está certo, mas poderia usar ap
           floatingLabelStyle: TextStyle(color: primaryColor),
         ),
 
+        //cometário  Campos de entrada padronizados com a cor do app
+ Sugestão: adicionar hintStyle e errorStyle para definir cor dos textos de dica e erro, deixa mais bonito e claro
+        
+
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: primaryColor,
