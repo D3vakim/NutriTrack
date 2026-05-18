@@ -79,6 +79,9 @@ Observação: como já definiu a cor primária, está certo, mas poderia usar ap
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
         ),
+        //cometário Botões padronizados, cor e formato definidos
+ Sugestão: adicionar também estilo para OutlinedButton e TextButton, para todos os botões seguirem o mesmo padrão
+        
 
         cardTheme: CardThemeData(
           elevation: 0,
