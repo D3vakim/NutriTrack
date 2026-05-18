@@ -10,7 +10,7 @@ android {
     namespace = "com.example.calculadora_imc"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
-
+// comentário, Troque para valor seu, ex: `com.seunome.calculadoraimc` — não usar "example"
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
