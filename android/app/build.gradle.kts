@@ -51,6 +51,11 @@ https://developer.android.com/studio/build/application-id.html
 }
 
 //cometário, Só para teste! Antes de publicar, configure chave oficial de assinatura
+// 
+cometário, Melhoria: adicione aqui:
+shrinkResources = true
+minifyEnabled = true
+→ diminui tamanho e deixa mais seguro
 
 
 flutter {
