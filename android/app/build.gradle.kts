@@ -11,6 +11,8 @@ android {
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 // comentário, Troque para valor seu, ex: `com.seunome.calculadoraimc` — não usar "example"
+// cometário, Uma boa  prática: versões gerenciadas pelo Flutter, evita erros
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
