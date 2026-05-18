@@ -35,6 +35,9 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
+// cometário OBRIGATÓRIO ALTERAR! É o ID único da loja. Troque para algo seu, ex: `com.seunome.calculadoraimc`
+https://developer.android.com/studio/build/application-id.html
+
 
     buildTypes {
         release {
