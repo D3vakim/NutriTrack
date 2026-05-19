@@ -185,3 +185,21 @@ Melhoria: usar `Theme.of(context).scaffoldBackgroundColor` para manter padrão.
     );
   }
 }
+
+//### Resumo geral
+
+ Pontos positivos:
+- Animações bem feitas e organizadas
+- Verificação de sessão implementada corretamente
+- Cuida de não navegar se a tela já foi fechada
+- Libera recursos corretamente
+
+Pontos para corrigir:
+- [ ] Remover espera fixa de 2s
+- [ ] Reutilizar a mesma instância do SupabaseService
+- [ ] Usar cores do tema em vez de valores fixos
+
+Melhorias:
+- Centralizar cores em arquivo de constantes
+- Adicionar tratamento de erro no carregamento
+  
