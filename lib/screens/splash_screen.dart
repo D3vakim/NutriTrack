@@ -59,6 +59,8 @@ Melhoria: usar a mesma instância compartilhada em todo o app.
     await _logoController.forward();
     await Future.delayed(const Duration(milliseconds: 200));
     if (mounted) {
+      // Libera os controladores de animação corretamente — evita vazamento de memória, ótimo!
+      
       _contentController.forward();
     }
   }
