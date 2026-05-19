@@ -30,6 +30,9 @@ Correção: usar Theme.of(context).primaryColor — deixa tudo padronizado e fá
             
             accountName: const Text(
               'NutriTrack',
+              // cometário,  Nome do app definido
+Melhoria: tirar o 'const' se for usar tema, ou mover o texto para constantes para reaproveitar
+              
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             accountEmail: lastImcData != null 
