@@ -25,6 +25,9 @@ Sugestão: usar um Estado reativo (Provider, Riverpod, etc.) para que o dado atu
         children: [
           UserAccountsDrawerHeader(
             decoration: const BoxDecoration(color: Colors.green),
+            //cometário, Problema: cor está fixa como 'verde padrão', diferente da cor principal do app (0xFF2E7D32) definida no tema.
+Correção: usar Theme.of(context).primaryColor — deixa tudo padronizado e fácil de mudar depois.
+            
             accountName: const Text(
               'NutriTrack',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
