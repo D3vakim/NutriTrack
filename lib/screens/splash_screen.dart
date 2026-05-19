@@ -47,6 +47,7 @@ Melhoria: remover espera fixa — só esperar o tempo necessário do carregament
 Melhoria: usar a mesma instância compartilhada em todo o app.
   
     _startAnimations();
+    // Verificação de `mounted` antes de navegar — evita erro de tela destruída, essencial!
     
     _initAppData();
   }
