@@ -14,6 +14,10 @@ class CustomDrawer extends StatelessWidget {
     final lastImcData = supabaseService.imcHistory.isNotEmpty 
         ? supabaseService.imcHistory.first 
         : null;
+    //cometário Lógica correta para pegar o último registro
+ Melhoria: se a lista for atualizada fora dessa tela, esse valor não muda automaticamente.
+Sugestão: usar um Estado reativo (Provider, Riverpod, etc.) para que o dado atualize sozinho quando novo registro for salvo.
+  
 
     return Drawer(
       child: ListView(
