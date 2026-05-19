@@ -8,6 +8,9 @@ class CustomDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final supabaseService = SupabaseService();
+    //cometário, Ponto de atenção: instanciar o serviço assim cria uma nova instância toda vez.
+Melhoria: use injeção de dependência ou provedor para compartilhar a mesma instância em todo o app — evita consumo desnecessário de recursos.
+  
     final lastImcData = supabaseService.imcHistory.isNotEmpty 
         ? supabaseService.imcHistory.first 
         : null;
