@@ -42,7 +42,6 @@ Melhoria: remover espera fixa — só esperar o tempo necessário do carregament
     _contentAnimation = CurvedAnimation(parent: _contentController, curve: Curves.easeIn);
 
     _startAnimations();
-    // Animações separadas em método próprio — código mais organizado
     
     _initAppData();
   }
