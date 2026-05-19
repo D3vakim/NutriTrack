@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
 //comentário, Caminho correto do serviço, separação de lógica está boa, é bom manter essa organização, ajuda muito na manutenção
-//cometário, Ponto de atenção: instanciar o serviço assim cria uma nova instância toda vez.
-Melhoria: use injeção de dependência ou provedor para compartilhar a mesma instância em todo o app — evita consumo desnecessário de recursos.
-  
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
