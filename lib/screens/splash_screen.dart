@@ -116,6 +116,8 @@ Melhoria: usar `Theme.of(context).scaffoldBackgroundColor` para manter padrão.
                       color: Color(0xFFE8F5E9),
                       shape: BoxShape.circle,
                     ),
+                    //Indicador de carregamento visível,  adicionar tratamento de erro — se falhar ao carregar dados, mostrar mensagem e opção de tentar novamente
+                    
                     child: const Icon(
                       Icons.health_and_safety,
                       size: 80,
