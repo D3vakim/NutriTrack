@@ -62,6 +62,9 @@ Sugestão: adicionar verificação se os campos existem antes de usar.
             leading: Icon(Icons.settings, color: Colors.green),
             title: Text('Configurações'),
           ),
+          // cometário Mesmo problema da cor: está fixa, não usa a cor do tema.
+Correção: usar Theme.of(context).primaryColor
+          
           const Divider(),
           const Padding(
             padding: EdgeInsets.all(16.0),
