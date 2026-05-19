@@ -30,6 +30,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     );
     // Durações definidas, animações com curva suave — boa experiência visual
     // Animações separadas em método próprio — código mais organizado
+    // Lógica de inicialização separada — ótima separação de responsabilidades
     
 
     _contentController = AnimationController(
