@@ -64,7 +64,9 @@ Melhoria: usar a mesma instância compartilhada em todo o app.
       _contentController.forward();
     }
   }
-
+// Cor fixa.
+Melhoria: usar `Theme.of(context).scaffoldBackgroundColor` para manter padrão.
+  
   Future<void> _initAppData() async {
     // Dá tempo de ver a animação bonita
     await Future.delayed(const Duration(seconds: 2));
