@@ -48,6 +48,9 @@ Sugestão: adicionar verificação se os campos existem antes de usar.
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Image.asset('assets/images/logo.png'),
+                // cometário, Caminho da imagem correto
+ Lembrete: verificar se a imagem está declarada corretamente no pubspec.yaml, senão dá erro ao carregar
+                
               ),
             ),
           ),
