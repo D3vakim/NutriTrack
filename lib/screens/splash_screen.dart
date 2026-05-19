@@ -50,6 +50,8 @@ Melhoria: usar a mesma instância compartilhada em todo o app.
     
     _initAppData();
   }
+  // Verificação de `mounted` antes de navegar — evita erro de tela destruída, essencial!
+  
   
 
   void _startAnimations() async {
