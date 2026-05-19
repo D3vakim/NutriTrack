@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
+//comentário, Caminho correto do serviço, separação de lógica está boa, é bom manter essa organização, ajuda muito na manutenção
+  
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
