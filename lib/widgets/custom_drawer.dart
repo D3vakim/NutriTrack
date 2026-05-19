@@ -70,6 +70,9 @@ Correção: usar Theme.of(context).primaryColor
             padding: EdgeInsets.all(16.0),
             child: Text(
               'Versão 1.0.0',
+              // cometário, Versão informada
+ Melhoria: não deixar versão fixa no código — ler automaticamente do arquivo de configuração do app, assim não precisa mudar em vários lugares.
+              
               style: TextStyle(color: Colors.grey),
             ),
           ),
