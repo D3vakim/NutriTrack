@@ -81,3 +81,20 @@ Correção: usar Theme.of(context).primaryColor
     );
   }
 }
+// cometário, ### Resumo geral
+
+ Pontos positivos:
+- Código limpo e objetivo
+- Separação da lógica no arquivo de serviço
+- Trata o caso de não ter dados cadastrados
+
+Pontos para corrigir:
+- [ ] Usar cor do tema em vez de `Colors.green` fixo
+- [ ] Verificar se os campos `imc` e `date` existem antes de exibir
+- [ ] Não criar nova instância do serviço toda vez
+
+ Melhorias recomendadas:
+- Usar gerenciamento de estado para atualizar dado automaticamente
+- Formatar data para melhor visualização
+- Ler versão do app automaticamente
+  
