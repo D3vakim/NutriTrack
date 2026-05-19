@@ -80,6 +80,8 @@ Melhoria: usar `Theme.of(context).scaffoldBackgroundColor` para manter padrão.
       if (mounted) {
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MainScaffold()));
       }
+      // Cores corretas do padrão do app,  mover essas cores para constantes, para não repetir o código
+  
     } else {
       // Não está logado. Vai pra tela de Login
       if (mounted) {
