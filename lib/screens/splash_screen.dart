@@ -14,6 +14,8 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
   late AnimationController _logoController;
+  // Declaração correta dos controladores e animações, poderia usar nomes mais curtos ou agrupar, mas está claro
+  
   late AnimationController _contentController;
   late Animation<double> _logoAnimation;
   late Animation<double> _contentAnimation;
