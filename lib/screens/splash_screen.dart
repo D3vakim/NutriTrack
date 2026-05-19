@@ -42,6 +42,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     
     _initAppData();
   }
+  // Lógica de inicialização separada — ótima separação de responsabilidades
+  
 
   void _startAnimations() async {
     await _logoController.forward();
