@@ -39,6 +39,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     );
 // Ponto de atenção: espera fixa de 2s, mesmo que os dados já estejam prontos.
 Melhoria: remover espera fixa — só esperar o tempo necessário do carregamento real, deixa o app mais rápido.
+  // Verificação correta de sessão ativa
   
     _logoAnimation = CurvedAnimation(parent: _logoController, curve: Curves.easeIn);
     _contentAnimation = CurvedAnimation(parent: _contentController, curve: Curves.easeIn);
