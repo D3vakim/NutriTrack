@@ -43,7 +43,9 @@ Melhoria: remover espera fixa — só esperar o tempo necessário do carregament
   
     _logoAnimation = CurvedAnimation(parent: _logoController, curve: Curves.easeIn);
     _contentAnimation = CurvedAnimation(parent: _contentController, curve: Curves.easeIn);
-
+//Mesmo ponto de antes: instancia o serviço novamente aqui.
+Melhoria: usar a mesma instância compartilhada em todo o app.
+  
     _startAnimations();
     
     _initAppData();
