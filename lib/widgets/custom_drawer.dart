@@ -35,6 +35,10 @@ Correção: usar Theme.of(context).primaryColor — deixa tudo padronizado e fá
             accountEmail: lastImcData != null 
                 ? Text('Último IMC: ${lastImcData['imc'].toStringAsFixed(2)} (${lastImcData['date']})')
                 : const Text('Nenhum registro ainda'),
+            //cometário, Boa lógica de exibição condicional
+ Possível erro: os dados 'imc' e 'date' podem não existir ou ser nulos — pode causar erro em tela.
+Sugestão: adicionar verificação se os campos existem antes de usar, Melhoria formatar a data para um formato mais amigável ao usuário.
+            
             currentAccountPicture: CircleAvatar(
               backgroundColor: Colors.white,
               child: Padding(
