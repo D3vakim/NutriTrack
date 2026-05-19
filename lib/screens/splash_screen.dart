@@ -38,6 +38,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     _contentAnimation = CurvedAnimation(parent: _contentController, curve: Curves.easeIn);
 
     _startAnimations();
+    // Animações separadas em método próprio — código mais organizado
+    
     _initAppData();
   }
 
