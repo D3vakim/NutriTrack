@@ -29,6 +29,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       duration: const Duration(milliseconds: 800),
     );
     // Durações definidas, animações com curva suave — boa experiência visual
+    // Animações separadas em método próprio — código mais organizado
     
 
     _contentController = AnimationController(
