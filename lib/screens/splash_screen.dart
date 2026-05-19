@@ -45,7 +45,6 @@ Melhoria: remover espera fixa — só esperar o tempo necessário do carregament
     
     _initAppData();
   }
-  // Lógica de inicialização separada — ótima separação de responsabilidades
   
 
   void _startAnimations() async {
