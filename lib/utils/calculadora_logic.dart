@@ -23,6 +23,9 @@ String calcularImc(double weight, double height) {
   } else {
     return "Obesidade Grau III (${imc.toStringAsPrecision(4)})";
   }
+  // Função retorna cor de destaque conforme valor
+ Cores escolhidas combinam com o tema do app, mover essas cores para arquivo de constantes, evita repetição
+  
 }
 
 Color getImcColor(double imc) {
