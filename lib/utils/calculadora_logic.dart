@@ -74,3 +74,18 @@ IconData getImcIcon(double imc) {
     return Icons.dangerous_outlined;
   }
 }
+// ### Resumo geral
+
+Pontos positivos:
+- Funções simples, claras e bem organizadas
+- Regras de cálculo e classificação corretas
+- Paleta de cores e ícones alinhados com o tema do app
+- Tudo separado por função, fácil de manter
+
+ Pontos para corrigir:
+- [ ] Adicionar validação de peso e altura (não pode ser zero ou negativo)
+
+ Melhorias:
+- Mostrar só 2 casas decimais no resultado
+- Centralizar cores e textos em constantes
+  
