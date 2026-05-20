@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 // Import necessário do Flutter
 // Função principal para cálculo do IMC — nome claro e objetivo
 Melhoria: adicionar validação para evitar altura ou peso <= 0 (evita erro ou resultado infinito)
+//Fórmula correta do cálculo de IMC
   
 String calcularImc(double weight, double height) {
   double imc = weight / (height * height);
