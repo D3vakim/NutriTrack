@@ -17,6 +17,8 @@ String calcularImc(double weight, double height) {
   } else if (imc >= 30.0 && imc < 35.0) {
     return "Obesidade Grau I (${imc.toStringAsPrecision(4)})";
   } else if (imc >= 35.0 && imc < 40.0) {
+    // Classificação do IMC segue as regras oficiais  usar toStringAsFixed(2) para mostrar só 2 casas decimais — fica mais limpo,  pode separar as descrições em constantes, para reaproveitar em outros lugares
+  
     return "Obesidade Grau II (${imc.toStringAsPrecision(4)})";
   } else {
     return "Obesidade Grau III (${imc.toStringAsPrecision(4)})";
