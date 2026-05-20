@@ -40,6 +40,8 @@ Color getImcColor(double imc) {
   } else {
     return const Color(0xFFB71C1C); // vermelho escuro
   }
+  // Função retorna cor de fundo suave, combinando com a cor principal Bom: fundo mais claro para não pesar a tela
+  
 }
 
 Color getImcBackgroundColor(double imc) {
