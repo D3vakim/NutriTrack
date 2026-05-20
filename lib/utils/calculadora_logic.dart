@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+// Import necessário do Flutter
 
 String calcularImc(double weight, double height) {
   double imc = weight / (height * height);
