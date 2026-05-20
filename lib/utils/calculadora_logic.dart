@@ -57,6 +57,9 @@ Color getImcBackgroundColor(double imc) {
     return const Color(0xFFFFEBEE);
   }
 }
+// Função retorna ícone correspondente ao resultado
+Ícones bem escolhidos e fáceis de entender
+  
 
 IconData getImcIcon(double imc) {
   if (imc < 18.5) {
